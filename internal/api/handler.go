@@ -160,7 +160,7 @@ func (handler *Handler) projects(w http.ResponseWriter, r *http.Request) {
 	}
 	for i := range projects {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-		output, countErr := exec.CommandContext(ctx, "git", "-C", projects[i].Path, "rev-list", "--count", "HEAD").Output()
+		output, countErr := exec.CommandContext(ctx, "git", "-c", "safe.directory="+projects[i].Path, "-C", projects[i].Path, "rev-list", "--count", "HEAD").Output()
 		cancel()
 		if countErr == nil {
 			projects[i].CommitCount, _ = strconv.Atoi(strings.TrimSpace(string(output)))
