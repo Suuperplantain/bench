@@ -52,11 +52,14 @@
         <span id="connection-state">CONNECTING TO YOUR WORKSPACE</span>
       </footer>
     </main>
-    <aside class="pet-overlay" aria-label="Bench's little helper">
-      <div class="pet-speech" id="pet-speech" aria-live="polite">Glad you’re here.</div>
-      <button class="pet-button" id="pet-button" type="button" aria-label="Say hello to Bench's dog">
+    <aside class="pet-overlay pet-hungry" id="pet-overlay" aria-label="Bench's dog">
+      <div class="pet-controls">
+        <div class="pet-speech" id="pet-speech" aria-live="polite">Have you got a treat?</div>
+        <button class="pet-feed" id="pet-feed" type="button"><span aria-hidden="true">✦</span> Give a treat</button>
+      </div>
+      <button class="pet-button" id="pet-button" type="button" aria-label="Give Bench's dog a pat">
         <img id="pet-sprite" src="/assets/pet-rest.png" alt="A pixel-art Rottweiler lying down with a bone" />
-        <span class="pet-caption">BENCH’S BUDDY <span aria-hidden="true">✦</span></span>
+        <span class="pet-caption" id="pet-caption">HUNGRY · BENCH’S BUDDY</span>
       </button>
     </aside>
     <dialog class="project-dialog" id="project-dialog" aria-labelledby="dialog-title">
@@ -86,5 +89,6 @@
       </div>
     </dialog>
     <script src="/app.js" defer></script>
+    <script src="/pet.js" defer></script>
   </body>
 </html>

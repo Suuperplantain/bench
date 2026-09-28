@@ -154,33 +154,3 @@ document.querySelector('#submit-project').addEventListener('click', addProject);
 document.querySelector('#project-path').addEventListener('keydown', event => { if (event.key === 'Enter') addProject(); });
 document.querySelector('#refresh-button').addEventListener('click', loadProjects);
 loadProjects();
-
-// The companion stays independent from project tiles so its behaviors can grow separately.
-const petFrames = [
-  { src: '/assets/pet-rest.png', alt: 'A pixel-art Rottweiler relaxing with a bone', line: 'Glad you’re here.' },
-  { src: '/assets/pet-wave.png', alt: 'A pixel-art Rottweiler lifting one paw to wave', line: 'Hey! Want to look around?' },
-  { src: '/assets/pet-happy.png', alt: 'A happy pixel-art Rottweiler sitting with its tongue out', line: 'I’m keeping this shelf safe.' },
-  { src: '/assets/pet-curious.png', alt: 'A pixel-art Rottweiler tilting its head', line: 'What are we building today?' },
-  { src: '/assets/pet-chew.png', alt: 'A pixel-art Rottweiler chewing a treat', line: 'Just having a little snack.' },
-  { src: '/assets/pet-fetch.png', alt: 'A pixel-art Rottweiler jumping up to catch a bone', line: 'Did somebody say fetch?' },
-  { src: '/assets/pet-sleep.png', alt: 'A pixel-art Rottweiler sleeping peacefully', line: 'I’ll keep an eye on things.' },
-];
-let petFrame = 0;
-const petSprite = document.querySelector('#pet-sprite');
-const petSpeech = document.querySelector('#pet-speech');
-let speechTimer;
-document.querySelector('#pet-button').addEventListener('click', () => {
-  petFrame = (petFrame + 1) % petFrames.length;
-  const next = petFrames[petFrame];
-  petSprite.src = next.src;
-  petSprite.alt = next.alt;
-  petSpeech.textContent = next.line;
-  petSpeech.hidden = false;
-  clearTimeout(speechTimer);
-  speechTimer = setTimeout(() => {
-    petSpeech.hidden = true;
-    petFrame = 0;
-    petSprite.src = petFrames[0].src;
-    petSprite.alt = petFrames[0].alt;
-  }, 3600);
-});
