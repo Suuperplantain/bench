@@ -6,8 +6,15 @@ const projectDialog = document.querySelector('#project-dialog');
 const addDialog = document.querySelector('#add-dialog');
 let projects = [];
 let selectedProject = null;
-
-const colorSet = ['#c8854f', '#b86b48', '#c59a58', '#87945c', '#8d7460', '#b7785a', '#78908a', '#c49a73'];
+const scrollAssets = {
+  priority: ['/assets/scroll-priority.png', 'Priority'],
+  'in-progress': ['/assets/scroll-in-progress.png', 'In progress'],
+  done: ['/assets/scroll-done.png', 'Done'],
+};
+const projectStatuses = (() => {
+  try { return JSON.parse(localStorage.getItem('bench-project-statuses') || '{}'); }
+  catch { return {}; }
+})();
 const marks = { Python: 'Py', Java: 'J', 'C++': 'C+', Go: 'Go', JavaScript: 'JS', TypeScript: 'TS', Rust: 'Rs', Ruby: 'Rb' };
 function languageMark(language) { return marks[language] || (language ? language.slice(0, 2) : '⌘'); }
 function shortDate(value) { return value ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value)) : 'Not available'; }
@@ -27,34 +34,51 @@ function renderProjects() {
   rows.forEach(row => row.replaceChildren());
   countLabel.textContent = projects.length + ' ' + (projects.length === 1 ? 'project' : 'projects') + ' on the shelf';
   emptyNote.hidden = projects.length !== 0;
-  const perShelf = Math.max(1, Math.ceil(projects.length / rows.length));
+  const perShelf = window.matchMedia('(max-width: 720px)').matches ? 2 : 3;
   projects.forEach((project, index) => {
-    const tile = document.createElement('button');
-    tile.type = 'button';
-    tile.className = 'project-tile';
-    tile.style.setProperty('--accent', colorSet[index % colorSet.length]);
-    tile.setAttribute('aria-label', project.name + ', ' + (project.language || 'language not detected') + ', ' + (project.dirty ? 'uncommitted changes' : 'clean working tree') + '. Open project details.');
-    const icon = document.createElement('span');
-    icon.className = 'tile-icon';
-    icon.textContent = languageMark(project.language);
-    icon.setAttribute('aria-hidden', 'true');
+    const status = projectStatuses[project.id] || 'in-progress';
+    const [scrollImage, statusLabel] = scrollAssets[status] || scrollAssets['in-progress'];
+    const scroll = document.createElement('button');
+    scroll.type = 'button';
+    scroll.className = 'project-scroll';
+    scroll.title = statusLabel + ' · ' + project.name;
+    scroll.setAttribute('aria-label', project.name + ', ' + statusLabel + ', ' + (project.language || 'language not detected') + ', ' + (project.dirty ? 'uncommitted changes' : 'clean working tree') + '. Open project details.');
+    const image = document.createElement('img');
+    image.src = scrollImage;
+    image.alt = '';
+    image.draggable = false;
+    const label = document.createElement('span');
+    label.className = 'scroll-label';
     const copy = document.createElement('span');
-    copy.className = 'tile-copy';
+    copy.className = 'scroll-copy';
     const name = document.createElement('span');
-    name.className = 'tile-name';
+    name.className = 'scroll-name';
     name.textContent = project.name;
+    const state = document.createElement('span');
+    state.className = 'scroll-state';
+    state.textContent = statusLabel;
     const language = document.createElement('span');
-    language.className = 'tile-language';
-    language.textContent = project.language || project.branch || 'Git project';
-    copy.append(name, language);
-    const status = document.createElement('span');
-    status.className = 'tile-status' + (project.dirty ? ' dirty' : '');
-    status.title = project.dirty ? 'Uncommitted changes' : 'Working tree is clean';
-    tile.append(icon, copy, status);
-    tile.addEventListener('click', () => openProject(project));
-    rows[Math.floor(index / perShelf)].append(tile);
+    language.className = 'scroll-language';
+    language.textContent = languageMark(project.language);
+    copy.append(name, state);
+    label.append(copy, language);
+    scroll.append(image, label);
+    scroll.addEventListener('mouseenter', () => window.dispatchEvent(new CustomEvent('bench:project-scroll-hover', { detail: true })));
+    scroll.addEventListener('mouseleave', () => window.dispatchEvent(new CustomEvent('bench:project-scroll-hover', { detail: false })));
+    scroll.addEventListener('click', () => openProject(project));
+    const shelfIndex = Math.max(0, rows.length - 1 - Math.floor(index / perShelf));
+    rows[shelfIndex].append(scroll);
   });
 }
+
+let narrowShelf = window.matchMedia('(max-width: 720px)').matches;
+window.addEventListener('resize', () => {
+  const isNarrow = window.matchMedia('(max-width: 720px)').matches;
+  if (isNarrow !== narrowShelf) {
+    narrowShelf = isNarrow;
+    renderProjects();
+  }
+});
 
 async function loadProjects() {
   countLabel.textContent = 'Loading saved projects…';
@@ -78,6 +102,13 @@ function openProject(project) {
   selectedProject = project;
   document.querySelector('#dialog-title').textContent = project.name;
   document.querySelector('#dialog-path').textContent = project.path;
+  const statusSelect = document.querySelector('#project-status');
+  statusSelect.value = projectStatuses[project.id] || 'in-progress';
+  statusSelect.onchange = () => {
+    projectStatuses[project.id] = statusSelect.value;
+    localStorage.setItem('bench-project-statuses', JSON.stringify(projectStatuses));
+    renderProjects();
+  };
   document.querySelector('#project-note').value = project.note || '';
   document.querySelector('#note-status').textContent = '';
   const grid = document.querySelector('#detail-grid');

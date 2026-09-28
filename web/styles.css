@@ -51,29 +51,20 @@ button { color: inherit; }
 .refresh-button span { color: var(--gold); font-size: 15px; }
 .shelves { position: absolute; z-index: 2; top: 12%; left: 24%; width: 52%; height: 67%; display: grid; grid-template-rows: repeat(4,1fr); pointer-events: none; }
 .shelf-row { display: flex; align-items: flex-end; justify-content: center; gap: clamp(7px,1vw,18px); min-width: 0; padding: 0 1.5% 3.1%; pointer-events: auto; }
-.shelf-decor { position: absolute; z-index: 3; left: 24%; bottom: 23%; width: 52%; height: clamp(92px,12vw,150px); display: flex; align-items: flex-end; justify-content: space-between; pointer-events: none; }
+.shelf-row:last-child { padding-left: clamp(90px,11vw,130px); }
+.shelf-decor { position: absolute; z-index: 3; left: 24%; bottom: 23%; width: 52%; height: clamp(92px,12vw,150px); display: flex; align-items: flex-end; pointer-events: none; }
 .shelf-plant { display: block; width: clamp(78px,10vw,132px); height: 100%; object-fit: contain; object-position: bottom left; filter: drop-shadow(0 5px 4px rgba(22,12,7,.35)); }
-.scroll-set { display: flex; align-items: flex-end; gap: clamp(2px,.5vw,8px); padding-bottom: 2px; }
-.shelf-scroll { position: relative; width: clamp(53px,6.6vw,88px); display: flex; align-items: center; flex-direction: column; filter: drop-shadow(0 4px 3px rgba(22,12,7,.34)); }
-.shelf-scroll img { display: block; width: 100%; height: auto; }
-.shelf-scroll span { position: absolute; bottom: -13px; left: 50%; transform: translateX(-50%); padding: 2px 5px; border: 1px solid rgba(255,231,200,.27); border-radius: 4px; color: #f8ead6; background: rgba(43,27,18,.88); font: 7px 'DM Mono',monospace; line-height: 1.2; white-space: nowrap; text-shadow: 0 1px 3px #21150f; }
-.project-tile {
-  --accent: #bb7544; position: relative; width: clamp(94px,12.3vw,174px); height: clamp(52px,6.3vw,84px);
-  flex: 0 1 174px; display: flex; align-items: center; gap: 10px; padding: 9px 10px 10px 9px;
-  border: 1px solid rgba(71,41,23,.76); border-radius: 5px 5px 3px 3px; color: var(--ink); text-align: left;
-  background: linear-gradient(135deg,rgba(255,241,217,.96),rgba(224,188,143,.94));
-  box-shadow: 0 7px 7px rgba(19,10,6,.36),0 2px 0 rgba(255,235,201,.55) inset,0 -4px 0 rgba(93,51,24,.42) inset;
-  cursor: pointer; overflow: hidden; transition: transform .18s ease,filter .18s ease;
-}
-.project-tile::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 5px; background: var(--accent); }
-.project-tile::after { content: ''; position: absolute; inset: 4px; border: 1px solid rgba(93,51,24,.12); border-radius: 3px; pointer-events: none; }
-.project-tile:hover, .project-tile:focus-visible { transform: translateY(-8px); filter: brightness(1.08); outline: none; }
-.tile-icon { flex: 0 0 28px; width: 28px; height: 35px; display: grid; place-items: center; border-radius: 2px 5px 5px 2px; color: #f8e6cb; background: linear-gradient(135deg,var(--accent),#54321f); box-shadow: 2px 2px 4px rgba(37,20,12,.25),inset 2px 0 rgba(255,241,217,.25); font: 11px 'DM Mono',monospace; }
-.tile-copy { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
-.tile-name { overflow: hidden; color: #39251a; font-size: clamp(9px,.85vw,12px); line-height: 1.15; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
-.tile-language { color: #795b43; font: 8px 'DM Mono',monospace; text-transform: uppercase; letter-spacing: .045em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.tile-status { position: absolute; right: 8px; top: 7px; width: 6px; height: 6px; border-radius: 50%; background: #78965c; box-shadow: 0 0 0 2px rgba(120,150,92,.18); }
-.tile-status.dirty { background: #d2904c; box-shadow: 0 0 0 2px rgba(210,144,76,.18); }
+.project-scroll { position: relative; width: clamp(112px,12.8vw,158px); height: clamp(112px,12.8vw,136px); flex: 0 1 158px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; padding: 0 3px 1px; border: 0; color: #382316; background: transparent; cursor: pointer; transition: transform .18s ease,filter .18s ease; }
+.project-scroll img { display: block; width: 100%; height: clamp(76px,7.6vw,94px); object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 4px 3px rgba(22,12,7,.35)); transition: transform .18s ease; }
+.project-scroll:hover img, .project-scroll:focus-visible img { transform: translateY(-4px); }
+.project-scroll:focus-visible { outline: 2px solid #f5c77f; outline-offset: 2px; border-radius: 8px; }
+.scroll-label { width: 100%; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 4px 6px; border: 1px solid rgba(89,55,30,.54); border-radius: 4px; background: linear-gradient(135deg,rgba(255,237,205,.96),rgba(223,187,137,.96)); box-shadow: 0 2px 4px rgba(19,10,6,.32),inset 0 1px rgba(255,255,255,.6); }
+.scroll-copy { min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.scroll-name { overflow: hidden; font-size: clamp(8px,.74vw,10px); font-weight: 700; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
+.scroll-state { font: 6px 'DM Mono',monospace; text-transform: uppercase; letter-spacing: .04em; color: #6f5138; }
+.scroll-language { flex: 0 0 auto; color: #795b43; font: 7px 'DM Mono',monospace; text-transform: uppercase; }
+.project-status-select { width: 100%; margin: -1px 0 17px; padding: 10px 12px; border: 1px solid rgba(255,222,184,.2); border-radius: 8px; color: #f7e8d2; background: #392419; font-size: 12px; }
+.project-status-select:focus { border-color: #d5a464; outline: none; box-shadow: 0 0 0 3px rgba(213,164,100,.12); }
 .empty-note { position: absolute; z-index: 3; top: 33%; left: 50%; width: min(410px,80vw); padding: 23px 26px; transform: translateX(-50%); text-align: center; border: 1px solid rgba(255,229,193,.24); border-radius: 12px; background: rgba(45,27,17,.83); box-shadow: 0 18px 45px #160d09a3; color: #e9d5bb; backdrop-filter: blur(8px); }
 .empty-icon { display: inline-grid; place-items: center; width: 38px; height: 38px; border: 1px solid #a87b50; border-radius: 11px; color: var(--gold); font-size: 24px; }
 .empty-title { margin: 14px 0 5px; color: #fff0dc; font-size: 17px; font-weight: 600; }
@@ -138,15 +129,14 @@ dialog::backdrop { background: rgba(18,11,8,.62); backdrop-filter: blur(4px); }
   .refresh-button { padding: 4px 7px; font-size: 8px; }
   .shelves { top: 18%; left: 18%; width: 64%; height: 57%; }
   .shelf-row { gap: 5px; padding: 0 0 4.7%; }
+  .shelf-row:last-child { padding-left: 58px; }
   .shelf-decor { left: 18%; bottom: 24%; width: 64%; height: clamp(68px,20vw,102px); }
   .shelf-plant { width: clamp(52px,15vw,76px); }
-  .scroll-set { gap: 0; padding-bottom: 0; }
-  .shelf-scroll { width: clamp(39px,11.5vw,58px); }
-  .shelf-scroll span { bottom: -11px; padding: 2px 3px; font-size: 6px; }
-  .project-tile { width: min(43%,128px); height: 55px; flex: 0 1 128px; gap: 6px; padding: 7px 5px 7px 8px; }
-  .tile-icon { width: 22px; height: 30px; flex-basis: 22px; font-size: 9px; }
-  .tile-name { font-size: 9px; } .tile-language { font-size: 7px; }
-  .tile-status { right: 5px; top: 5px; width: 5px; height: 5px; }
+  .project-scroll { width: clamp(92px,26vw,122px); height: clamp(91px,26vw,108px); flex-basis: clamp(92px,26vw,122px); }
+  .project-scroll img { height: clamp(58px,16vw,70px); }
+  .scroll-label { gap: 2px; padding: 3px 4px; }
+  .scroll-name { font-size: 8px; }
+  .scroll-state, .scroll-language { font-size: 6px; }
   .empty-note { top: 39%; padding: 17px; } .empty-note code { font-size: 8px; }
   .pet-overlay { right: 7px; bottom: 25px; width: clamp(118px,32vw,166px); }
   .pet-button { height: clamp(140px,42vw,190px); }

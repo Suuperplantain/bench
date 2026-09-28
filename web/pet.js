@@ -6,77 +6,74 @@
   const feedButton = document.querySelector('#pet-feed');
   const caption = document.querySelector('#pet-caption');
   const frames = {
-    rest: ['/assets/pet-rest.png', 'A pixel-art Rottweiler relaxing with a bone'],
     sit: ['/assets/pet-sit.png', 'A pixel-art Rottweiler sitting'],
-    happy: ['/assets/pet-happy.png', 'A happy pixel-art Rottweiler sitting with its tongue out'],
-    curious: ['/assets/pet-curious.png', 'A pixel-art Rottweiler tilting its head'],
-    wave: ['/assets/pet-wave.png', 'A pixel-art Rottweiler lifting one paw to wave'],
-    fetch: ['/assets/pet-fetch.png', 'A pixel-art Rottweiler jumping to catch a bone'],
+    happy: ['/assets/pet-happy.png', 'A pixel-art Rottweiler sitting with its tongue out'],
+    wave: ['/assets/pet-wave.png', 'A pixel-art Rottweiler raising one paw toward a project scroll'],
+    fetch: ['/assets/pet-fetch.png', 'A pixel-art Rottweiler catching a treat'],
     sleep: ['/assets/pet-sleep.png', 'A pixel-art Rottweiler sleeping peacefully'],
     chew: ['/assets/pet-chew.png', 'A pixel-art Rottweiler chewing a treat'],
   };
-  const hungryActions = [
-    ['sit', 'Have you got a treat?'],
-    ['curious', 'I’m waiting…'],
-    ['wave', 'Could I have a snack?'],
-    ['rest', 'I can wait right here.'],
-  ];
-  const fedActions = [
-    ['rest', 'All good. I’ll hang out here.'],
-    ['happy', 'That was lovely.'],
-    ['curious', 'What are you working on?'],
-    ['wave', 'Hey, you’re still there.'],
-    ['sleep', 'Just having a little nap.'],
-    ['sit', 'Keeping an eye on the shelf.'],
-  ];
+  let tongueOut = false;
   let fed = false;
   let busy = false;
-  let activeFrame = 'rest';
-  let actionTimer;
+  let sleeping = false;
+  let hoveringScroll = false;
   let speechTimer;
+  let sleepTimer;
 
-  function say(message, duration = 2600) {
+  function say(message, duration = 2400) {
     clearTimeout(speechTimer);
     speech.textContent = message;
     speech.hidden = !message;
     if (message) {
-      speechTimer = setTimeout(() => {
-        if (!busy) speech.hidden = true;
-      }, duration);
+      speechTimer = setTimeout(() => { speech.hidden = true; }, duration);
     }
   }
 
-  function pose(name, message) {
+  function pose(name, message = '') {
     const frame = frames[name];
     if (!frame) return;
-    activeFrame = name;
     sprite.src = frame[0];
     sprite.alt = frame[1];
     button.classList.toggle('is-chewing', name === 'chew');
     if (message) say(message);
   }
 
-  function scheduleAction(delay) {
-    clearTimeout(actionTimer);
-    actionTimer = setTimeout(() => {
-      if (busy) return;
-      const actions = fed ? fedActions : hungryActions;
-      const options = actions.filter(([name]) => name !== activeFrame);
-      const next = options[Math.floor(Math.random() * options.length)] || actions[0];
-      pose(next[0], next[1]);
-      scheduleAction(4200 + Math.random() * 2800);
-    }, delay);
+  function sittingPose() {
+    pose(tongueOut ? 'happy' : 'sit');
+  }
+
+  function startInactivityTimer() {
+    clearTimeout(sleepTimer);
+    sleepTimer = setTimeout(() => {
+      sleeping = true;
+      pose('sleep');
+      say('Zzz…', 4000);
+    }, 10 * 60 * 1000);
+  }
+
+  function noteActivity() {
+    startInactivityTimer();
+    if (sleeping) {
+      sleeping = false;
+      if (!busy) pose(hoveringScroll ? 'wave' : (tongueOut ? 'happy' : 'sit'));
+    }
+  }
+
+  function cyclePose() {
+    if (busy || sleeping || hoveringScroll) return;
+    tongueOut = !tongueOut;
+    sittingPose();
   }
 
   function feed() {
     if (busy) return;
+    noteActivity();
     busy = true;
-    clearTimeout(actionTimer);
     feedButton.disabled = true;
     feedButton.textContent = 'Offering a treat…';
     button.classList.add('is-feeding');
-    say('Catch!', 5000);
-    pose('fetch');
+    pose('fetch', 'Catch!');
     setTimeout(() => pose('chew', 'Mmm. Crunchy.'), 850);
     setTimeout(() => {
       fed = true;
@@ -90,15 +87,28 @@
       button.classList.remove('is-feeding', 'is-chewing');
       feedButton.disabled = false;
       feedButton.innerHTML = '<span aria-hidden="true">✦</span> Give another treat';
-      scheduleAction(3600);
+      if (hoveringScroll) pose('wave');
+      else sittingPose();
     }, 3800);
   }
 
+  window.addEventListener('bench:project-scroll-hover', event => {
+    hoveringScroll = event.detail === true;
+    if (busy || sleeping) return;
+    if (hoveringScroll) pose('wave');
+    else sittingPose();
+  });
+
+  ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(type => {
+    document.addEventListener(type, noteActivity, { passive: true });
+  });
+
   button.addEventListener('click', () => {
-    if (busy) return;
-    pose(fed ? 'happy' : 'wave', fed ? 'Hi again.' : 'I’m right here.');
-    scheduleAction(4200 + Math.random() * 800);
+    if (!busy) say(fed ? 'Hey there.' : 'I’m right here.');
   });
   feedButton.addEventListener('click', feed);
-  scheduleAction(4300);
+
+  pose('sit');
+  setInterval(cyclePose, 500);
+  startInactivityTimer();
 })();

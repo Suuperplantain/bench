@@ -41,22 +41,8 @@
         <div class="shelf-row" data-shelf="2"></div>
         <div class="shelf-row" data-shelf="3"></div>
       </section>
-      <div class="shelf-decor" aria-label="Shelf decorations and project status key">
+      <div class="shelf-decor" aria-hidden="true">
         <img class="shelf-plant" src="/assets/plant.png" alt="" />
-        <div class="scroll-set" role="list" aria-label="Project status key">
-          <div class="shelf-scroll" role="listitem" aria-label="Priority">
-            <img src="/assets/scroll-priority.png" alt="" />
-            <span>Priority</span>
-          </div>
-          <div class="shelf-scroll" role="listitem" aria-label="In progress">
-            <img src="/assets/scroll-in-progress.png" alt="" />
-            <span>In progress</span>
-          </div>
-          <div class="shelf-scroll" role="listitem" aria-label="Done">
-            <img src="/assets/scroll-done.png" alt="" />
-            <span>Done</span>
-          </div>
-        </div>
       </div>
       <section class="empty-note" id="empty-note" hidden>
         <span class="empty-icon" aria-hidden="true">⌂</span>
@@ -75,7 +61,7 @@
         <button class="pet-feed" id="pet-feed" type="button"><span aria-hidden="true">✦</span> Give a treat</button>
       </div>
       <button class="pet-button" id="pet-button" type="button" aria-label="Give Bench's dog a pat">
-        <img id="pet-sprite" src="/assets/pet-rest.png" alt="A pixel-art Rottweiler lying down with a bone" />
+        <img id="pet-sprite" src="/assets/pet-sit.png" alt="A pixel-art Rottweiler sitting" />
         <span class="pet-caption" id="pet-caption">HUNGRY · BENCH’S BUDDY</span>
       </button>
     </aside>
@@ -85,6 +71,12 @@
       <h2 id="dialog-title"></h2>
       <p class="dialog-path" id="dialog-path"></p>
       <div class="detail-grid" id="detail-grid"></div>
+      <label class="note-label" for="project-status">Shelf status</label>
+      <select id="project-status" class="project-status-select">
+        <option value="priority">Priority</option>
+        <option value="in-progress">In progress</option>
+        <option value="done">Done</option>
+      </select>
       <label class="note-label" for="project-note">A note for later</label>
       <textarea id="project-note" maxlength="2000" rows="3" placeholder="What were you working on? Add a reminder…"></textarea>
       <div class="dialog-actions">
