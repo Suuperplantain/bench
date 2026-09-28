@@ -41,8 +41,18 @@
         <div class="shelf-row" data-shelf="2"></div>
         <div class="shelf-row" data-shelf="3"></div>
       </section>
-      <div class="shelf-decor" aria-hidden="true">
-        <img class="shelf-plant" id="shelf-plant" src="/assets/plant.png" alt="Potted plant. Drag to move, double-click to reset." title="Drag to move · double-click to reset" tabindex="0" role="img" />
+      <div class="shelf-decor">
+        <div class="plant-mover" id="plant-mover">
+          <button class="shelf-plant" id="shelf-plant" type="button" aria-label="Plant. Click to select, then drag to move. Double-click to reset." aria-expanded="false" title="Click to select, then drag. Use the compass arrows to nudge · double-click to reset">
+            <img src="/assets/plant.png" alt="Potted plant" draggable="false" />
+          </button>
+          <div class="plant-move-controls" id="plant-move-controls" role="group" aria-label="Move plant" hidden>
+            <button type="button" data-direction="north" aria-label="Move plant north">↑</button>
+            <button type="button" data-direction="east" aria-label="Move plant east">→</button>
+            <button type="button" data-direction="south" aria-label="Move plant south">↓</button>
+            <button type="button" data-direction="west" aria-label="Move plant west">←</button>
+          </div>
+        </div>
       </div>
       <section class="empty-note" id="empty-note" hidden>
         <span class="empty-icon" aria-hidden="true">⌂</span>
