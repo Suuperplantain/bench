@@ -38,7 +38,6 @@
     if (!frame) return;
     sprite.src = frame[0];
     sprite.alt = frame[1];
-    button.classList.toggle('is-chewing', name.startsWith('eat'));
     if (message) say(message);
   }
 
@@ -78,27 +77,34 @@
     button.classList.add('is-feeding');
     pose('fetch', 'Catch!');
     const eatingFrames = ['eat1', 'eat2', 'eat3', 'eat4'];
+    const frameDelay = 520;
     let eatingIndex = 0;
-    const eatingInterval = setInterval(() => {
-      pose(eatingFrames[eatingIndex % eatingFrames.length], eatingIndex === 0 ? 'Mmm. Crunchy.' : '');
-      eatingIndex += 1;
-    }, 420);
-    setTimeout(() => clearInterval(eatingInterval), 2650);
+    let eatingInterval;
     setTimeout(() => {
+      feedButton.textContent = 'Enjoying his treat…';
+      pose(eatingFrames[eatingIndex], 'Mmm. Crunchy.');
+      eatingIndex += 1;
+      eatingInterval = setInterval(() => {
+        pose(eatingFrames[eatingIndex % eatingFrames.length]);
+        eatingIndex += 1;
+      }, frameDelay);
+    }, 650);
+    setTimeout(() => {
+      clearInterval(eatingInterval);
       fed = true;
       overlay.classList.remove('pet-hungry');
       overlay.classList.add('pet-fed');
       caption.textContent = 'HAPPY · BENCH’S BUDDY';
       pose('happy', 'Thanks for the treat.');
-    }, 2650);
+    }, 650 + frameDelay * 8);
     setTimeout(() => {
       busy = false;
-      button.classList.remove('is-feeding', 'is-chewing');
+      button.classList.remove('is-feeding');
       feedButton.disabled = false;
       feedButton.innerHTML = '<span aria-hidden="true">✦</span> Give another treat';
       if (hoveringScroll) pose('wave');
       else sittingPose();
-    }, 3800);
+    }, 650 + frameDelay * 8 + 900);
   }
 
   window.addEventListener('bench:project-scroll-hover', event => {

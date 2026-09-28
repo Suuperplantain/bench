@@ -106,8 +106,8 @@ button { color: inherit; }
 .pet-speech[hidden] { display: none; }
 @keyframes speech-in { from { opacity: 0; transform: translateY(5px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes pet-idle { 0%,100% { translate: 0 0; } 50% { translate: 0 -3px; } }
-@keyframes pet-chew { 0%,100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(2px) rotate(-.7deg); } 75% { transform: translateY(0) rotate(.7deg); } }
-.pet-button.is-chewing img { animation: pet-chew .24s steps(2,end) infinite; }
+.pet-button.is-feeding { animation: none; }
+.pet-button.is-feeding:hover { transform: none; }
 .pet-hungry .pet-caption { color: #f5cf8f; }
 .pet-fed .pet-caption { color: #c5d58e; }
 dialog { color: #f8ead6; }
