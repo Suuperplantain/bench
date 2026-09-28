@@ -109,22 +109,16 @@ function openProject(project) {
   projectDialog.showModal();
 }
 
-const workspaceViews = {
-  desk: ['A clear space for the work', 'Ask Codex to inspect this repository or make a change. This desk is reserved for its working context and the next tools we add.'],
-  changes: ['Changes from this conversation', 'This view is reserved for reviewing edits from the conversation. It is ready for the change-review tools we add next.'],
-  files: ['Repository files', 'This view is reserved for repository files and previews. Ask Codex about a file from the chat on the left.'],
-};
+const workspaceViews = new Set(['desk', 'changes', 'files']);
 
 function selectWorkspaceTab(view) {
-  const [title, copy] = workspaceViews[view] || workspaceViews.desk;
+  if (!workspaceViews.has(view)) view = 'desk';
   document.querySelectorAll('[data-workspace-tab]').forEach(tab => {
     const active = tab.dataset.workspaceTab === view;
     tab.classList.toggle('is-active', active);
     tab.setAttribute('aria-selected', String(active));
   });
   document.querySelector('#workbench-page').setAttribute('aria-labelledby', 'tab-' + view);
-  document.querySelector('#workbench-title').textContent = title;
-  document.querySelector('#workbench-copy').textContent = copy;
 }
 
 document.querySelectorAll('[data-workspace-tab]').forEach(tab => {
