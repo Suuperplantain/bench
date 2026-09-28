@@ -11,7 +11,10 @@
     wave: ['/assets/pet-wave.png', 'A pixel-art Rottweiler raising one paw toward a project scroll'],
     fetch: ['/assets/pet-fetch.png', 'A pixel-art Rottweiler catching a treat'],
     sleep: ['/assets/pet-sleep.png', 'A pixel-art Rottweiler sleeping peacefully'],
-    chew: ['/assets/pet-chew.png', 'A pixel-art Rottweiler chewing a treat'],
+    eat1: ['/assets/pet-eat-1.png', 'A pixel-art Rottweiler holding a bone and beginning to eat'],
+    eat2: ['/assets/pet-eat-2.png', 'A pixel-art Rottweiler chewing a bone'],
+    eat3: ['/assets/pet-eat-3.png', 'A pixel-art Rottweiler taking a bite from a bone'],
+    eat4: ['/assets/pet-eat-4.png', 'A pixel-art Rottweiler chewing with crumbs around its mouth'],
   };
   let tongueOut = false;
   let fed = false;
@@ -35,7 +38,7 @@
     if (!frame) return;
     sprite.src = frame[0];
     sprite.alt = frame[1];
-    button.classList.toggle('is-chewing', name === 'chew');
+    button.classList.toggle('is-chewing', name.startsWith('eat'));
     if (message) say(message);
   }
 
@@ -74,7 +77,13 @@
     feedButton.textContent = 'Offering a treat…';
     button.classList.add('is-feeding');
     pose('fetch', 'Catch!');
-    setTimeout(() => pose('chew', 'Mmm. Crunchy.'), 850);
+    const eatingFrames = ['eat1', 'eat2', 'eat3', 'eat4'];
+    let eatingIndex = 0;
+    const eatingInterval = setInterval(() => {
+      pose(eatingFrames[eatingIndex % eatingFrames.length], eatingIndex === 0 ? 'Mmm. Crunchy.' : '');
+      eatingIndex += 1;
+    }, 420);
+    setTimeout(() => clearInterval(eatingInterval), 2650);
     setTimeout(() => {
       fed = true;
       overlay.classList.remove('pet-hungry');
