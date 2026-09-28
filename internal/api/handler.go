@@ -14,7 +14,7 @@ import (
 )
 
 type ProjectScanner interface {
-	Scan(context.Context) ([]discovery.Project, error)
+	InspectPath(context.Context, string) (discovery.Project, error)
 }
 
 type ProjectStore interface {
@@ -33,6 +33,7 @@ func NewHandler(scanner ProjectScanner, projectStore ProjectStore) http.Handler 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/health", handler.health)
 	mux.HandleFunc("GET /api/projects", handler.projects)
+	mux.HandleFunc("POST /api/projects", handler.addProject)
 	mux.HandleFunc("PUT /api/projects/{id}/note", handler.saveNote)
 	mux.HandleFunc("/", handler.notFound)
 	return securityHeaders(mux)
@@ -51,21 +52,55 @@ func (handler *Handler) health(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (handler *Handler) projects(w http.ResponseWriter, r *http.Request) {
-	projects, err := handler.scanner.Scan(r.Context())
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "project discovery failed")
-		return
-	}
-	if err := handler.store.SyncProjects(r.Context(), projects); err != nil {
-		writeError(w, http.StatusInternalServerError, "project metadata could not be saved")
-		return
-	}
-	savedProjects, err := handler.store.ListProjects(r.Context())
+	projects, err := handler.store.ListProjects(r.Context())
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "project metadata could not be read")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"projects": savedProjects})
+	writeJSON(w, http.StatusOK, map[string]any{"projects": projects})
+}
+
+func (handler *Handler) addProject(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	var payload struct {
+		Path string `json:"path"`
+	}
+	if err := decoder.Decode(&payload); err != nil {
+		writeError(w, http.StatusBadRequest, "request must contain a project path")
+		return
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		writeError(w, http.StatusBadRequest, "request must contain one JSON object")
+		return
+	}
+	payload.Path = strings.TrimSpace(payload.Path)
+	if payload.Path == "" {
+		writeError(w, http.StatusBadRequest, "project path is required")
+		return
+	}
+	project, err := handler.scanner.InspectPath(r.Context(), payload.Path)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := handler.store.SyncProjects(r.Context(), []discovery.Project{project}); err != nil {
+		writeError(w, http.StatusInternalServerError, "project metadata could not be saved")
+		return
+	}
+	projects, err := handler.store.ListProjects(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "project metadata could not be read")
+		return
+	}
+	for _, saved := range projects {
+		if saved.ID == project.ID {
+			writeJSON(w, http.StatusOK, saved)
+			return
+		}
+	}
+	writeError(w, http.StatusInternalServerError, "project could not be loaded after saving")
 }
 
 func (handler *Handler) saveNote(w http.ResponseWriter, r *http.Request) {

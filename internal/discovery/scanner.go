@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -78,6 +79,77 @@ func (scanner *Scanner) Scan(ctx context.Context) ([]Project, error) {
 	}
 	sortProjects(projects)
 	return projects, nil
+}
+
+// InspectPath validates and inspects one repository path without walking the configured roots.
+func (scanner *Scanner) InspectPath(ctx context.Context, candidate string) (Project, error) {
+	absolutePath, err := filepath.Abs(candidate)
+	if err != nil {
+		return Project{}, fmt.Errorf("resolve project path %q: %w", candidate, err)
+	}
+	absPath := filepath.Clean(absolutePath)
+	info, err := os.Stat(absPath)
+	if err != nil || !info.IsDir() {
+		return Project{}, fmt.Errorf("project path must be an existing directory")
+	}
+
+	allowed := false
+	for _, root := range scanner.roots {
+		absoluteRoot, err := filepath.Abs(root)
+		if err != nil {
+			continue
+		}
+		if isWithinRoot(filepath.Clean(absoluteRoot), absPath) {
+			allowed = true
+			break
+		}
+	}
+	if !allowed {
+		return Project{}, fmt.Errorf("project path must be inside a configured scan root")
+	}
+
+	repositoryRoot := gitOutput(ctx, absPath, "rev-parse", "--show-toplevel")
+	if repositoryRoot == "" {
+		return Project{}, fmt.Errorf("path is not a Git repository")
+	}
+	if !filepath.IsAbs(repositoryRoot) {
+		repositoryRoot = filepath.Join(absPath, repositoryRoot)
+	}
+	repositoryRoot, err = filepath.Abs(repositoryRoot)
+	if err != nil {
+		return Project{}, fmt.Errorf("resolve Git repository root: %w", err)
+	}
+	repositoryRoot = filepath.Clean(repositoryRoot)
+	if !samePath(repositoryRoot, absPath) {
+		return Project{}, fmt.Errorf("choose the repository root, not a folder inside it")
+	}
+	insideAllowedRoot := false
+	for _, root := range scanner.roots {
+		absoluteRoot, err := filepath.Abs(root)
+		if err == nil && isWithinRoot(filepath.Clean(absoluteRoot), repositoryRoot) {
+			insideAllowedRoot = true
+			break
+		}
+	}
+	if !insideAllowedRoot {
+		return Project{}, fmt.Errorf("Git repository root must be inside a configured scan root")
+	}
+	return inspectRepository(ctx, absPath)
+}
+
+func samePath(left, right string) bool {
+	if runtime.GOOS == "windows" {
+		return strings.EqualFold(filepath.Clean(left), filepath.Clean(right))
+	}
+	return filepath.Clean(left) == filepath.Clean(right)
+}
+
+func isWithinRoot(root, candidate string) bool {
+	relative, err := filepath.Rel(root, candidate)
+	if err != nil {
+		return false
+	}
+	return relative == "." || (relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)))
 }
 
 func inspectRepository(parent context.Context, repositoryPath string) (Project, error) {

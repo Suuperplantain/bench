@@ -64,7 +64,16 @@ func main() {
 	}
 	defer database.Close()
 
-	handler := api.NewHandler(discovery.New(absRoots), database)
+	scanner := discovery.New(absRoots)
+	initialProjects, err := scanner.Scan(context.Background())
+	if err != nil {
+		log.Fatalf("discover projects: %v", err)
+	}
+	if err := database.SyncProjects(context.Background(), initialProjects); err != nil {
+		log.Fatalf("save discovered projects: %v", err)
+	}
+
+	handler := api.NewHandler(scanner, database)
 	server := &http.Server{
 		Addr:              *listenAddress,
 		Handler:           handler,
