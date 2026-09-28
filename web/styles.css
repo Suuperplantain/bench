@@ -52,8 +52,10 @@ button { color: inherit; }
 .shelves { position: absolute; z-index: 2; top: 12%; left: 24%; width: 52%; height: 67%; display: grid; grid-template-rows: repeat(4,1fr); pointer-events: none; }
 .shelf-row { display: flex; align-items: flex-end; justify-content: center; gap: clamp(7px,1vw,18px); min-width: 0; padding: 0 1.5% 3.1%; pointer-events: auto; }
 .shelf-row:last-child { padding-left: clamp(90px,11vw,130px); }
-.shelf-decor { position: absolute; z-index: 3; left: 24%; bottom: 23%; width: 52%; height: clamp(92px,12vw,150px); display: flex; align-items: flex-end; pointer-events: none; }
-.shelf-plant { display: block; width: clamp(78px,10vw,132px); height: 100%; object-fit: contain; object-position: bottom left; filter: drop-shadow(0 5px 4px rgba(22,12,7,.35)); }
+.shelf-decor { position: absolute; z-index: 3; inset: 0; pointer-events: none; }
+.shelf-plant { position: absolute; z-index: 1; left: var(--plant-left,24%); top: var(--plant-top,60%); display: block; width: clamp(78px,10vw,132px); height: clamp(92px,12vw,150px); object-fit: contain; object-position: bottom left; filter: drop-shadow(0 5px 4px rgba(22,12,7,.35)); pointer-events: auto; cursor: grab; touch-action: none; user-select: none; }
+.shelf-plant.is-dragging { z-index: 7; cursor: grabbing; transform: scale(1.035); filter: drop-shadow(0 8px 8px rgba(22,12,7,.5)); }
+.shelf-plant:focus-visible { outline: 2px solid #f5c77f; outline-offset: 2px; border-radius: 8px; }
 .project-scroll { position: relative; width: clamp(112px,12.8vw,158px); height: clamp(112px,12.8vw,136px); flex: 0 1 158px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; padding: 0 3px 1px; border: 0; color: #382316; background: transparent; cursor: pointer; transition: transform .18s ease,filter .18s ease; }
 .project-scroll img { display: block; width: 100%; height: clamp(76px,7.6vw,94px); object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 4px 3px rgba(22,12,7,.35)); transition: transform .18s ease; }
 .project-scroll:hover img, .project-scroll:focus-visible img { transform: translateY(-4px); }
@@ -130,8 +132,7 @@ dialog::backdrop { background: rgba(18,11,8,.62); backdrop-filter: blur(4px); }
   .shelves { top: 18%; left: 18%; width: 64%; height: 57%; }
   .shelf-row { gap: 5px; padding: 0 0 4.7%; }
   .shelf-row:last-child { padding-left: 58px; }
-  .shelf-decor { left: 18%; bottom: 24%; width: 64%; height: clamp(68px,20vw,102px); }
-  .shelf-plant { width: clamp(52px,15vw,76px); }
+  .shelf-plant { left: var(--plant-left,18%); top: var(--plant-top,67%); width: clamp(52px,15vw,76px); height: clamp(68px,20vw,102px); }
   .project-scroll { width: clamp(92px,26vw,122px); height: clamp(91px,26vw,108px); flex-basis: clamp(92px,26vw,122px); }
   .project-scroll img { height: clamp(58px,16vw,70px); }
   .scroll-label { gap: 2px; padding: 3px 4px; }
