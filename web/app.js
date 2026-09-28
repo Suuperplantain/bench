@@ -19,8 +19,6 @@ const projectStatuses = (() => {
 })();
 const marks = { Python: 'Py', Java: 'J', 'C++': 'C+', Go: 'Go', JavaScript: 'JS', TypeScript: 'TS', Rust: 'Rs', Ruby: 'Rb' };
 function languageMark(language) { return marks[language] || (language ? language.slice(0, 2) : '⌘'); }
-function shortDate(value) { return value ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value)) : 'Not available'; }
-
 async function request(url, options) {
   options = options || {};
   const response = await fetch(url, {
@@ -103,38 +101,35 @@ async function loadProjects() {
 function openProject(project) {
   selectedProject = project;
   document.querySelector('#dialog-title').textContent = project.name;
-  document.querySelector('#dialog-path').textContent = project.path;
-  const statusSelect = document.querySelector('#project-status');
-  statusSelect.value = projectStatuses[project.id] || 'in-progress';
-  statusSelect.onchange = () => {
-    projectStatuses[project.id] = statusSelect.value;
-    localStorage.setItem('bench-project-statuses', JSON.stringify(projectStatuses));
-    renderProjects();
-  };
   document.querySelector('#project-note').value = project.note || '';
-  document.querySelector('#note-status').textContent = '';
-  const grid = document.querySelector('#detail-grid');
-  grid.replaceChildren();
-  const details = [
-    ['Language', project.language || 'Not detected'],
-    ['Branch', project.branch || 'No branch'],
-    ['Working tree', project.dirty ? 'Changes not committed' : 'Clean'],
-    ['Last commit', shortDate(project.last_commit_at)],
-    ['Latest commit', project.latest_commit || 'Not available'],
-  ];
-  details.forEach(([label, value]) => {
-    const cell = document.createElement('div');
-    cell.className = 'detail-cell';
-    const heading = document.createElement('span');
-    heading.textContent = label;
-    const detail = document.createElement('strong');
-    detail.textContent = value;
-    cell.append(heading, detail);
-    grid.append(cell);
-  });
+  document.querySelector('#note-status').textContent = '＋';
+  document.querySelector('#workbench-state').innerHTML = '<i></i> READY';
+  selectWorkspaceTab('desk');
   renderChat(project);
   projectDialog.showModal();
 }
+
+const workspaceViews = {
+  desk: ['A clear space for the work', 'Ask Codex to inspect this repository or make a change. This desk is reserved for its working context and the next tools we add.'],
+  changes: ['Changes from this conversation', 'This view is reserved for reviewing edits from the conversation. It is ready for the change-review tools we add next.'],
+  files: ['Repository files', 'This view is reserved for repository files and previews. Ask Codex about a file from the chat on the left.'],
+};
+
+function selectWorkspaceTab(view) {
+  const [title, copy] = workspaceViews[view] || workspaceViews.desk;
+  document.querySelectorAll('[data-workspace-tab]').forEach(tab => {
+    const active = tab.dataset.workspaceTab === view;
+    tab.classList.toggle('is-active', active);
+    tab.setAttribute('aria-selected', String(active));
+  });
+  document.querySelector('#workbench-page').setAttribute('aria-labelledby', 'tab-' + view);
+  document.querySelector('#workbench-title').textContent = title;
+  document.querySelector('#workbench-copy').textContent = copy;
+}
+
+document.querySelectorAll('[data-workspace-tab]').forEach(tab => {
+  tab.addEventListener('click', () => selectWorkspaceTab(tab.dataset.workspaceTab));
+});
 
 function saveChatHistories() {
   try { localStorage.setItem('bench-chat-histories', JSON.stringify(chatHistories)); } catch { /* The active chat still works if storage is full or unavailable. */ }
@@ -205,6 +200,7 @@ document.querySelector('#chat-form').addEventListener('submit', async event => {
   chatBusy = true;
   document.querySelector('.project-dialog .dialog-close').disabled = true;
   status.textContent = 'Codex is working…';
+  document.querySelector('#workbench-state').innerHTML = '<i></i> WORKING';
   let assistantBubble = null;
   let assistantText = '';
   try {
@@ -241,12 +237,14 @@ document.querySelector('#chat-form').addEventListener('submit', async event => {
           finished = true;
           if (assistantText) saveChatMessage(project.id, 'assistant', assistantText);
           status.textContent = 'Ready · working in ' + project.name;
+          document.querySelector('#workbench-state').innerHTML = '<i></i> READY';
         }
         if (item.type === 'error') {
           const error = item.payload.text || 'Codex could not complete that request.';
           appendChatMessage('error', error);
           saveChatMessage(project.id, 'error', error);
           status.textContent = 'Chat needs attention';
+          document.querySelector('#workbench-state').innerHTML = '<i></i> ATTENTION';
           finished = true;
         }
       }
@@ -258,6 +256,7 @@ document.querySelector('#chat-form').addEventListener('submit', async event => {
     appendChatMessage('error', message);
     saveChatMessage(project.id, 'error', message);
     status.textContent = 'Chat needs attention';
+    document.querySelector('#workbench-state').innerHTML = '<i></i> ATTENTION';
   } finally {
     chatBusy = false;
     document.querySelector('.project-dialog .dialog-close').disabled = false;
@@ -281,7 +280,7 @@ document.querySelector('#save-note').addEventListener('click', async event => {
     const note = document.querySelector('#project-note').value;
     await request('/api/projects/' + encodeURIComponent(selectedProject.id) + '/note', { method: 'PUT', body: JSON.stringify({ note }) });
     selectedProject.note = note;
-    status.textContent = 'Saved locally';
+    status.textContent = '✓';
   } catch (error) {
     status.textContent = error.message;
   } finally {

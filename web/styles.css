@@ -81,8 +81,6 @@ button { color: inherit; }
 .scroll-name { overflow: hidden; font-size: clamp(8px,.74vw,10px); font-weight: 700; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
 .scroll-state { font: 6px 'DM Mono',monospace; text-transform: uppercase; letter-spacing: .04em; color: #6f5138; }
 .scroll-language { flex: 0 0 auto; color: #795b43; font: 7px 'DM Mono',monospace; text-transform: uppercase; }
-.project-status-select { width: 100%; margin: -1px 0 17px; padding: 10px 12px; border: 1px solid rgba(255,222,184,.2); border-radius: 8px; color: #f7e8d2; background: #392419; font-size: 12px; }
-.project-status-select:focus { border-color: #d5a464; outline: none; box-shadow: 0 0 0 3px rgba(213,164,100,.12); }
 .empty-note { position: absolute; z-index: 3; top: 33%; left: 50%; width: min(410px,80vw); padding: 23px 26px; transform: translateX(-50%); text-align: center; border: 1px solid rgba(255,229,193,.24); border-radius: 12px; background: rgba(45,27,17,.83); box-shadow: 0 18px 45px #160d09a3; color: #e9d5bb; backdrop-filter: blur(8px); }
 .empty-icon { display: inline-grid; place-items: center; width: 38px; height: 38px; border: 1px solid #a87b50; border-radius: 11px; color: var(--gold); font-size: 24px; }
 .empty-title { margin: 14px 0 5px; color: #fff0dc; font-size: 17px; font-weight: 600; }
@@ -117,11 +115,6 @@ dialog::backdrop { background: rgba(18,11,8,.62); backdrop-filter: blur(4px); }
 .dialog-close { width: 30px; height: 30px; border: 1px solid rgba(255,235,208,.2); border-radius: 8px; color: #eed9bd; background: rgba(255,255,255,.04); cursor: pointer; font-size: 21px; line-height: 1; }
 .dialog-eyebrow { margin: 0 0 9px; color: #e5b979; font-size: 9px; }
 .project-dialog h2, .add-dialog h2 { margin: 0; color: #fff0db; font-size: 27px; letter-spacing: -.04em; }
-.dialog-path { margin: 8px 0 22px; color: #bca58d; font: 10px 'DM Mono',monospace; overflow-wrap: anywhere; }
-.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 22px; }
-.detail-cell { min-width: 0; padding: 10px 11px; border: 1px solid rgba(255,225,185,.1); border-radius: 8px; background: rgba(255,242,220,.045); }
-.detail-cell span { display: block; margin-bottom: 5px; color: #b59a7d; font: 8px 'DM Mono',monospace; text-transform: uppercase; letter-spacing: .09em; }
-.detail-cell strong { display: block; overflow: hidden; color: #f2dcc0; font-size: 12px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .note-label { display: block; margin-bottom: 7px; color: #efdec8; font-size: 11px; font-weight: 600; }
 .project-dialog textarea, .add-dialog input { width: 100%; padding: 11px 12px; border: 1px solid rgba(255,222,184,.2); border-radius: 8px; outline: none; color: #f7e8d2; background: rgba(17,11,7,.42); font-size: 12px; resize: vertical; }
 .add-dialog input { height: 42px; }
@@ -155,22 +148,91 @@ dialog::backdrop { background: rgba(18,11,8,.62); backdrop-filter: blur(4px); }
 .chat-composer-bottom span { color: #bda58d; font-size: 9px; }
 .chat-composer button:disabled { opacity: .55; cursor: wait; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+.project-dialog {
+  position: fixed; inset: 0; width: min(1240px,97vw); height: min(900px,94vh); max-width: none; max-height: none; margin: auto; padding: 26px;
+  overflow: hidden; border: 1px solid #8b6542; border-radius: 3px; color: #392719;
+  background-color: #d7b77e;
+  background-image: radial-gradient(ellipse at 16% 9%,rgba(255,239,193,.72),transparent 44%), radial-gradient(ellipse at 88% 88%,rgba(135,79,36,.12),transparent 48%), repeating-linear-gradient(2deg,rgba(87,51,25,.025) 0 1px,transparent 1px 5px), linear-gradient(115deg,#ead29c,#d8b980 52%,#cda971);
+  box-shadow: 0 28px 100px rgba(14,8,4,.72), inset 0 0 0 5px rgba(94,57,32,.09), inset 0 0 0 7px rgba(255,240,196,.27);
+  clip-path: polygon(0 1%,3% .7%,6% 1.15%,9% .75%,12% 1.1%,16% .7%,20% 1.1%,24% .72%,28% 1.08%,32% .74%,36% 1.1%,40% .72%,44% 1.08%,48% .74%,52% 1.1%,56% .72%,60% 1.08%,64% .74%,68% 1.1%,72% .72%,76% 1.08%,80% .74%,84% 1.1%,88% .72%,92% 1.08%,96% .74%,100% 1%,99.55% 5%,100% 9%,99.6% 13%,100% 17%,99.55% 21%,100% 25%,99.6% 29%,100% 33%,99.55% 37%,100% 41%,99.6% 45%,100% 49%,99.55% 53%,100% 57%,99.6% 61%,100% 65%,99.55% 69%,100% 73%,99.6% 77%,100% 81%,99.55% 85%,100% 89%,99.6% 93%,100% 97%,97% 99.3%,93% 98.85%,89% 99.25%,85% 98.9%,81% 99.28%,77% 98.9%,73% 99.3%,69% 98.9%,65% 99.28%,61% 98.9%,57% 99.3%,53% 98.9%,49% 99.28%,45% 98.9%,41% 99.3%,37% 98.9%,33% 99.28%,29% 98.9%,25% 99.3%,21% 98.9%,17% 99.28%,13% 98.9%,9% 99.3%,5% 98.9%,0 99%,.45% 95%,0 91%,.4% 87%,0 83%,.45% 79%,0 75%,.4% 71%,0 67%,.45% 63%,0 59%,.4% 55%,0 51%,.45% 47%,0 43%,.4% 39%,0 35%,.45% 31%,0 27%,.4% 23%,0 19%,.45% 15%,0 11%,.4% 7%);
+}
+.project-dialog::backdrop { background: rgba(18,11,8,.72); backdrop-filter: blur(5px); }
+.project-dialog form[method="dialog"] { z-index: 5; top: 13px; right: 22px; }
+.project-dialog .dialog-close { border-color: rgba(74,45,23,.3); color: #4b321e; background: rgba(255,240,200,.38); }
+.project-workspace { display: grid; grid-template-columns: minmax(320px,.75fr) minmax(0,1.25fr); gap: 19px; height: 100%; padding: 13px 3px 2px; }
+.project-chat, .workbench { min-width: 0; min-height: 0; overflow: hidden; border: 1px solid rgba(91,57,31,.35); border-radius: 3px; box-shadow: inset 0 0 0 3px rgba(255,241,205,.23), 0 5px 15px rgba(81,49,24,.12); }
+.project-chat { display: flex; flex-direction: column; background: linear-gradient(160deg,rgba(248,229,183,.8),rgba(222,193,142,.83)); }
+.chat-header { display: block; flex: none; padding: 17px 18px 12px; border-bottom: 1px solid rgba(91,57,31,.23); }
+.dialog-eyebrow { margin: 0 0 5px; color: #81562d; font: 700 9px 'DM Mono',monospace; letter-spacing: .14em; }
+.project-dialog h2.project-title { margin: 0 0 13px; padding-right: 23px; color: #392719; font: 700 clamp(24px,3vw,39px)/1 'Grenze Gotisch','IM Fell English',serif; letter-spacing: 0; overflow-wrap: anywhere; }
+.chat-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.chat-header h3, .workbench-header h3 { margin: 0; color: #392719; font: 700 22px/1.05 'Grenze Gotisch','IM Fell English',serif; letter-spacing: 0; }
+.chat-scope { padding: 4px 7px; border: 1px solid rgba(80,106,49,.4); border-radius: 999px; color: #4d6030; font: 700 7px 'DM Mono',monospace; letter-spacing: .05em; white-space: nowrap; }
+.chat-messages { flex: 1; min-height: 90px; overflow-y: auto; display: flex; flex-direction: column; align-items: stretch; gap: 9px; padding: 14px 16px; }
+.chat-welcome { margin: auto 0; padding: 18px 10px; color: #654b32; text-align: center; font: 15px/1.5 'IM Fell English',Georgia,serif; }
+.chat-welcome strong { display: block; margin-bottom: 6px; color: #392719; font: 700 21px/1.1 'Grenze Gotisch','IM Fell English',serif; }
+.chat-message { max-width: 94%; padding: 9px 11px; border: 1px solid rgba(91,57,31,.2); border-radius: 9px 9px 9px 2px; color: #382719; background: rgba(255,246,218,.68); box-shadow: 0 2px 4px rgba(81,49,24,.07); font: 14px/1.45 'IM Fell English',Georgia,serif; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-message.user { border-color: rgba(126,81,39,.25); border-radius: 9px 9px 2px 9px; color: #392719; background: rgba(205,164,98,.35); }
+.chat-message.error { border-color: rgba(142,51,29,.32); color: #812f1f; background: rgba(255,218,195,.65); }
+.chat-composer { flex: none; padding: 10px 12px 7px; border-top: 1px solid rgba(91,57,31,.22); background: rgba(186,144,86,.16); }
+.project-dialog textarea { border: 1px solid rgba(91,57,31,.3); border-radius: 3px; color: #392719; background: rgba(255,248,224,.77); font: 13px/1.4 'IM Fell English',Georgia,serif; }
+.project-dialog textarea:focus { border-color: #9b6b39; box-shadow: 0 0 0 2px rgba(155,107,57,.15); }
+.project-dialog textarea::placeholder { color: #8a7053; }
+.chat-composer textarea { min-height: 62px; max-height: 140px; }
+.chat-composer-bottom { min-height: 33px; padding-top: 6px; }
+.chat-composer-bottom span { color: #755a3d; font: 11px 'IM Fell English',Georgia,serif; }
+.chat-composer .save-note, .note-save { padding: 7px 12px; border: 1px solid #81562d; border-radius: 3px; color: #f8e5bd; background: #79502d; font: 700 12px 'Grenze Gotisch','IM Fell English',serif; cursor: pointer; }
+.chat-composer .save-note:hover, .note-save:hover { background: #5f3c22; }
+.notes-pocket { flex: none; margin: 0 12px 12px; border: 1px solid rgba(91,57,31,.28); background: rgba(255,244,215,.3); }
+.notes-pocket summary { display: flex; align-items: center; justify-content: space-between; min-height: 29px; padding: 4px 9px; color: #654b32; cursor: pointer; font: 11px 'IM Fell English',Georgia,serif; list-style: none; }
+.notes-pocket summary::-webkit-details-marker { display: none; }
+.notes-pocket summary::before { content: '▸'; margin-right: 7px; color: #835a32; }
+.notes-pocket[open] summary::before { content: '▾'; }
+.notes-pocket summary span:first-child { margin-right: auto; }
+.notes-indicator { color: #56703b; font-size: 10px; }
+.notes-drawer { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 7px; padding: 0 7px 7px; }
+.notes-drawer textarea { min-height: 43px; max-height: 75px; padding: 7px 8px; font-size: 12px; }
+.note-save { padding: 6px 9px; font-size: 11px; }
+.workbench { display: flex; flex-direction: column; background-color: rgba(241,220,174,.48); background-image: repeating-linear-gradient(0deg,transparent 0 31px,rgba(106,73,40,.09) 31px 32px),linear-gradient(100deg,rgba(255,249,226,.36),rgba(212,180,127,.2)); }
+.workbench-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 82px; padding: 16px 21px; border-bottom: 1px solid rgba(91,57,31,.24); }
+.workbench-header .dialog-eyebrow { margin-bottom: 7px; }
+.workbench-header h3 { font-size: 25px; }
+.workbench-state { display: inline-flex; align-items: center; gap: 6px; flex: none; color: #52623a; font: 700 8px 'DM Mono',monospace; letter-spacing: .08em; }
+.workbench-state i { width: 7px; height: 7px; border-radius: 50%; background: #71834b; box-shadow: 0 0 0 3px rgba(113,131,75,.12); }
+.workbench-tabs { display: flex; align-items: center; gap: 6px; padding: 10px 18px 0; border-bottom: 1px solid rgba(91,57,31,.25); }
+.workbench-tab { position: relative; padding: 8px 12px 10px; border: 0; color: #715a3f; background: transparent; cursor: pointer; font: 15px 'IM Fell English',Georgia,serif; }
+.workbench-tab::after { position: absolute; right: 8px; bottom: -1px; left: 8px; height: 2px; background: transparent; content: ''; }
+.workbench-tab.is-active { color: #3b2819; font-weight: 700; }
+.workbench-tab.is-active::after { background: #8a5b30; }
+.workbench-page { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: auto; padding: 35px; text-align: center; }
+.workbench-empty-mark { display: grid; place-items: center; width: 58px; height: 58px; margin-bottom: 18px; border: 1px solid rgba(106,73,40,.3); border-radius: 50%; color: #8a5b30; font-size: 24px; }
+.workbench-page h4 { margin: 0 0 10px; color: #402b1b; font: 700 clamp(24px,3vw,37px)/1.1 'Grenze Gotisch','IM Fell English',serif; }
+.workbench-page > p { max-width: 490px; margin: 0; color: #654b32; font: 17px/1.55 'IM Fell English',Georgia,serif; }
+.workbench-rule { width: min(180px,50%); height: 1px; margin: 24px 0 13px; background: rgba(91,57,31,.35); }
+.workbench-page > .workbench-tip { color: #806747; font-size: 13px; font-style: italic; }
+@media (max-width: 720px) {
+  .project-dialog { inset: auto 0 0; width: 100vw; height: 96dvh; margin: auto 0 0; padding: 20px 14px 12px; }
+  .project-workspace { grid-template-columns: 1fr; grid-template-rows: minmax(0,1fr) minmax(210px,.75fr); gap: 10px; padding: 8px 2px 0; }
+  .chat-header { padding: 10px 12px 8px; }
+  .project-dialog h2.project-title { margin-bottom: 8px; font-size: 25px; }
+  .chat-header h3 { font-size: 19px; }
+  .chat-messages { min-height: 65px; padding: 9px 11px; }
+  .chat-composer { padding: 7px 8px 5px; }
+  .chat-composer textarea { min-height: 42px; }
+  .notes-pocket { margin: 0 8px 8px; }
+  .workbench-header { min-height: 56px; padding: 8px 12px; }
+  .workbench-header h3 { font-size: 19px; }
+  .workbench-tabs { padding: 4px 10px 0; }
+  .workbench-tab { padding: 6px 9px 7px; font-size: 13px; }
+  .workbench-page { padding: 12px; }
+  .workbench-empty-mark { width: 35px; height: 35px; margin-bottom: 7px; font-size: 16px; }
+  .workbench-page h4 { margin-bottom: 5px; font-size: 22px; }
+  .workbench-page > p { font-size: 13px; }
+  .workbench-rule { margin: 10px 0 6px; }
+  .workbench-page > .workbench-tip { font-size: 11px; }
+}
 @media (min-aspect-ratio: 1.75/1) { .shelves { left: 26%; width: 48%; } .welcome { top: 17vh; } }
 @media (max-width: 720px) {
-  .project-dialog { inset: auto 0 0; width: 100vw; height: 94dvh; margin: auto 0 0; padding: 23px 14px 12px; border-radius: 16px 16px 0 0; }
-  .project-workspace { grid-template-columns: 1fr; grid-template-rows: minmax(0,.76fr) minmax(250px,1.24fr); gap: 12px; padding-top: 8px; }
-  .project-overview { padding: 3px 3px 10px; }
-  .project-dialog h2 { font-size: 21px; }
-  .dialog-path { margin-bottom: 12px; font-size: 9px; }
-  .detail-grid { gap: 6px; margin-bottom: 12px; }
-  .detail-cell { padding: 7px 8px; }
-  .project-status-select { margin-bottom: 9px; padding: 8px; }
-  .project-overview textarea { min-height: 48px; }
-  .project-chat { min-height: 0; }
-  .chat-header { padding: 11px 13px; }
-  .chat-messages { min-height: 90px; padding: 12px; }
-  .chat-composer { padding: 9px; }
-  .chat-composer textarea { min-height: 48px; }
   .room { min-height: 100svh; background-position: center; }
   .topbar { height: 64px; padding-inline: 16px; }
   .brand { font-size: 17px; } .topbar-right { gap: 10px; }
