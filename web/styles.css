@@ -51,6 +51,12 @@ button { color: inherit; }
 .refresh-button span { color: var(--gold); font-size: 15px; }
 .shelves { position: absolute; z-index: 2; top: 12%; left: 24%; width: 52%; height: 67%; display: grid; grid-template-rows: repeat(4,1fr); pointer-events: none; }
 .shelf-row { display: flex; align-items: flex-end; justify-content: center; gap: clamp(7px,1vw,18px); min-width: 0; padding: 0 1.5% 3.1%; pointer-events: auto; }
+.shelf-decor { position: absolute; z-index: 3; left: 24%; bottom: 23%; width: 52%; height: clamp(92px,12vw,150px); display: flex; align-items: flex-end; justify-content: space-between; pointer-events: none; }
+.shelf-plant { display: block; width: clamp(78px,10vw,132px); height: 100%; object-fit: contain; object-position: bottom left; filter: drop-shadow(0 5px 4px rgba(22,12,7,.35)); }
+.scroll-set { display: flex; align-items: flex-end; gap: clamp(2px,.5vw,8px); padding-bottom: 2px; }
+.shelf-scroll { position: relative; width: clamp(53px,6.6vw,88px); display: flex; align-items: center; flex-direction: column; filter: drop-shadow(0 4px 3px rgba(22,12,7,.34)); }
+.shelf-scroll img { display: block; width: 100%; height: auto; }
+.shelf-scroll span { position: absolute; bottom: -13px; left: 50%; transform: translateX(-50%); padding: 2px 5px; border: 1px solid rgba(255,231,200,.27); border-radius: 4px; color: #f8ead6; background: rgba(43,27,18,.88); font: 7px 'DM Mono',monospace; line-height: 1.2; white-space: nowrap; text-shadow: 0 1px 3px #21150f; }
 .project-tile {
   --accent: #bb7544; position: relative; width: clamp(94px,12.3vw,174px); height: clamp(52px,6.3vw,84px);
   flex: 0 1 174px; display: flex; align-items: center; gap: 10px; padding: 9px 10px 10px 9px;
@@ -132,6 +138,11 @@ dialog::backdrop { background: rgba(18,11,8,.62); backdrop-filter: blur(4px); }
   .refresh-button { padding: 4px 7px; font-size: 8px; }
   .shelves { top: 18%; left: 18%; width: 64%; height: 57%; }
   .shelf-row { gap: 5px; padding: 0 0 4.7%; }
+  .shelf-decor { left: 18%; bottom: 24%; width: 64%; height: clamp(68px,20vw,102px); }
+  .shelf-plant { width: clamp(52px,15vw,76px); }
+  .scroll-set { gap: 0; padding-bottom: 0; }
+  .shelf-scroll { width: clamp(39px,11.5vw,58px); }
+  .shelf-scroll span { bottom: -11px; padding: 2px 3px; font-size: 6px; }
   .project-tile { width: min(43%,128px); height: 55px; flex: 0 1 128px; gap: 6px; padding: 7px 5px 7px 8px; }
   .tile-icon { width: 22px; height: 30px; flex-basis: 22px; font-size: 9px; }
   .tile-name { font-size: 9px; } .tile-language { font-size: 7px; }
