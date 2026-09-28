@@ -87,7 +87,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("listen on %s: %v", *listenAddress, err)
 	}
-	log.Printf("Bench API listening at http://%s", listener.Addr())
+	log.Printf("Bench is ready at http://%s", listener.Addr())
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

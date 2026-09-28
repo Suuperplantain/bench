@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#24160f" />
+    <meta name="description" content="A local shelf for your development projects." />
+    <title>Bench — project shelf</title>
+    <link rel="preload" href="/assets/shelf-room.png" as="image" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="room" aria-label="Bench project shelf">
+      <div class="room-shade" aria-hidden="true"></div>
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Bench home">
+          <span class="brand-mark" aria-hidden="true">b.</span>
+          <span>bench<span class="brand-dot">/</span></span>
+        </a>
+        <div class="topbar-right">
+          <span class="local-chip"><i></i> LOCAL WORKSPACE</span>
+          <button class="add-project" id="add-project-button" type="button">
+            <span aria-hidden="true">＋</span> Add a project
+          </button>
+        </div>
+      </header>
+      <section class="welcome" aria-labelledby="page-title">
+        <p class="eyebrow">YOUR WORK, IN ONE PLACE</p>
+        <h1 id="page-title">The project shelf</h1>
+        <p class="welcome-copy">A little home for the things you’re building.</p>
+      </section>
+      <div class="shelf-meta" aria-live="polite">
+        <span id="project-count">Finding your projects…</span>
+        <button id="refresh-button" class="refresh-button" type="button" title="Reload saved project details, without scanning again">
+          <span aria-hidden="true">↻</span> Reload shelf
+        </button>
+      </div>
+      <section class="shelves" id="shelves" aria-label="Projects">
+        <div class="shelf-row" data-shelf="0"></div>
+        <div class="shelf-row" data-shelf="1"></div>
+        <div class="shelf-row" data-shelf="2"></div>
+        <div class="shelf-row" data-shelf="3"></div>
+      </section>
+      <section class="empty-note" id="empty-note" hidden>
+        <span class="empty-icon" aria-hidden="true">⌂</span>
+        <p class="empty-title">Nothing on the shelf yet</p>
+        <p>Start Bench with a folder that contains your Git projects, or add one from its path.</p>
+        <code>go run ./cmd/bench -root "C:\path\to\projects"</code>
+      </section>
+      <footer class="room-footer">
+        <span>BENCH · LOCAL PROJECT INDEX</span>
+        <span id="connection-state">CONNECTING TO YOUR WORKSPACE</span>
+      </footer>
+    </main>
+    <aside class="pet-overlay" aria-label="Bench's little helper">
+      <div class="pet-speech" id="pet-speech" aria-live="polite">Glad you’re here.</div>
+      <button class="pet-button" id="pet-button" type="button" aria-label="Say hello to Bench's dog">
+        <img id="pet-sprite" src="/assets/pet-rest.png" alt="A pixel-art Rottweiler lying down with a bone" />
+        <span class="pet-caption">BENCH’S BUDDY <span aria-hidden="true">✦</span></span>
+      </button>
+    </aside>
+    <dialog class="project-dialog" id="project-dialog" aria-labelledby="dialog-title">
+      <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
+      <p class="dialog-eyebrow" id="dialog-eyebrow">ON THE SHELF</p>
+      <h2 id="dialog-title"></h2>
+      <p class="dialog-path" id="dialog-path"></p>
+      <div class="detail-grid" id="detail-grid"></div>
+      <label class="note-label" for="project-note">A note for later</label>
+      <textarea id="project-note" maxlength="2000" rows="3" placeholder="What were you working on? Add a reminder…"></textarea>
+      <div class="dialog-actions">
+        <span id="note-status" aria-live="polite"></span>
+        <button class="save-note" id="save-note" type="button">Save note</button>
+      </div>
+    </dialog>
+    <dialog class="add-dialog" id="add-dialog" aria-labelledby="add-dialog-title">
+      <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
+      <p class="dialog-eyebrow">MAKE SOME ROOM</p>
+      <h2 id="add-dialog-title">Add a project</h2>
+      <p class="add-help">Paste the folder path of a Git repository inside one of Bench’s configured roots.</p>
+      <label class="note-label" for="project-path">Repository folder</label>
+      <input id="project-path" type="text" placeholder="C:\Users\you\Projects\my-app" autocomplete="off" />
+      <p class="form-error" id="add-error" role="alert"></p>
+      <div class="dialog-actions">
+        <span class="form-hint">Bench checks only this project path.</span>
+        <button class="save-note" id="submit-project" type="button">Add to shelf</button>
+      </div>
+    </dialog>
+    <script src="/app.js" defer></script>
+  </body>
+</html>

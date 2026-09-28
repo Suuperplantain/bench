@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/Suuperplantain/bench/internal/discovery"
@@ -35,8 +36,26 @@ func NewHandler(scanner ProjectScanner, projectStore ProjectStore) http.Handler 
 	mux.HandleFunc("GET /api/projects", handler.projects)
 	mux.HandleFunc("POST /api/projects", handler.addProject)
 	mux.HandleFunc("PUT /api/projects/{id}/note", handler.saveNote)
-	mux.HandleFunc("/", handler.notFound)
+	mux.Handle("/", staticFiles())
 	return securityHeaders(mux)
+}
+
+// staticFiles serves the small local web UI from ./web. API routes remain
+// registered above it, and an absent frontend keeps API-only use possible.
+func staticFiles() http.Handler {
+	files := http.FileServer(http.Dir("web"))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			w.Header().Set("Allow", "GET, HEAD")
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		if _, err := os.Stat("web/index.html"); err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		files.ServeHTTP(w, r)
+	})
 }
 
 func securityHeaders(next http.Handler) http.Handler {
@@ -139,15 +158,6 @@ func (handler *Handler) saveNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"id": projectID, "note": payload.Note})
-}
-
-func (handler *Handler) notFound(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet && r.Method != http.MethodHead {
-		w.Header().Set("Allow", "GET, HEAD")
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-	writeError(w, http.StatusNotFound, "route not found")
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {
