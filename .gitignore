@@ -1,0 +1,6 @@
+/.bench/
+/bench.db
+/bench.db-shm
+/bench.db-wal
+/coverage.out
+/coverage.html
