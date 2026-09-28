@@ -74,7 +74,7 @@ button { color: inherit; }
 .empty-note p:not(.empty-title) { margin: 0 auto 13px; max-width: 340px; color: #c7ad91; font-size: 12px; line-height: 1.55; }
 .empty-note code { font: 10px 'DM Mono',monospace; color: #e7bc82; white-space: normal; }
 .room-footer { position: absolute; z-index: 4; right: 4.5%; bottom: 19px; left: 4.5%; display: flex; justify-content: space-between; color: rgba(255,229,196,.78); font-size: 8px; text-shadow: 0 1px 5px #21150f; }
-.pet-overlay { --pet-x: calc(100vw - 280px); position: fixed; z-index: 8; left: 0; bottom: 32px; width: clamp(145px,18vw,242px); display: flex; align-items: center; flex-direction: column; pointer-events: none; transform: translate3d(var(--pet-x),0,0); transition: transform 1.4s cubic-bezier(.2,.7,.2,1); }
+.pet-overlay { position: fixed; z-index: 8; right: clamp(14px,3.5vw,50px); bottom: 32px; width: clamp(145px,18vw,242px); display: flex; align-items: center; flex-direction: column; pointer-events: none; }
 .pet-controls { position: absolute; right: 0; bottom: 100%; display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 4px; pointer-events: auto; }
 .pet-feed { display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid rgba(250,225,190,.34); border-radius: 8px; color: #f4dfc1; background: rgba(45,28,18,.92); box-shadow: 0 5px 15px rgba(19,10,5,.2); cursor: pointer; font-size: 10px; white-space: nowrap; transition: background .18s ease, transform .18s ease; }
 .pet-feed span { color: #f1c36d; }
@@ -137,7 +137,7 @@ dialog::backdrop { background: rgba(18,11,8,.62); backdrop-filter: blur(4px); }
   .tile-name { font-size: 9px; } .tile-language { font-size: 7px; }
   .tile-status { right: 5px; top: 5px; width: 5px; height: 5px; }
   .empty-note { top: 39%; padding: 17px; } .empty-note code { font-size: 8px; }
-  .pet-overlay { bottom: 25px; width: clamp(118px,32vw,166px); }
+  .pet-overlay { right: 7px; bottom: 25px; width: clamp(118px,32vw,166px); }
   .pet-button { height: clamp(140px,42vw,190px); }
   .pet-controls { right: 0; flex-direction: column; align-items: flex-end; gap: 5px; margin-bottom: 4px; }
   .pet-feed { padding: 7px 8px; font-size: 9px; }

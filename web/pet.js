@@ -32,7 +32,6 @@
   let fed = false;
   let busy = false;
   let activeFrame = 'rest';
-  let activeSpot = 2;
   let actionTimer;
   let speechTimer;
 
@@ -57,21 +56,6 @@
     if (message) say(message);
   }
 
-  function moveToSpot(index) {
-    const width = overlay.getBoundingClientRect().width;
-    const margin = window.innerWidth <= 720 ? 8 : Math.max(24, Math.min(50, window.innerWidth * 0.035));
-    const end = Math.max(margin, window.innerWidth - width - margin);
-    const middle = Math.max(margin, (window.innerWidth - width) / 2);
-    const spots = [margin, middle, end];
-    activeSpot = index;
-    overlay.style.setProperty('--pet-x', Math.round(spots[index]) + 'px');
-  }
-
-  function wander() {
-    const choices = [0, 1, 2].filter(index => index !== activeSpot);
-    moveToSpot(choices[Math.floor(Math.random() * choices.length)]);
-  }
-
   function scheduleAction(delay) {
     clearTimeout(actionTimer);
     actionTimer = setTimeout(() => {
@@ -80,7 +64,6 @@
       const options = actions.filter(([name]) => name !== activeFrame);
       const next = options[Math.floor(Math.random() * options.length)] || actions[0];
       pose(next[0], next[1]);
-      wander();
       scheduleAction(4200 + Math.random() * 2800);
     }, delay);
   }
@@ -114,11 +97,8 @@
   button.addEventListener('click', () => {
     if (busy) return;
     pose(fed ? 'happy' : 'wave', fed ? 'Hi again.' : 'I’m right here.');
-    wander();
     scheduleAction(4200 + Math.random() * 800);
   });
   feedButton.addEventListener('click', feed);
-  window.addEventListener('resize', () => moveToSpot(activeSpot));
-  moveToSpot(activeSpot);
   scheduleAction(4300);
 })();

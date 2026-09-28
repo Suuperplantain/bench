@@ -1,6 +1,6 @@
 # Bench
 
-Bench is a local developer dashboard. It discovers Git repositories in folders you choose, records their current status in SQLite, and gives them a home on a small pixel-art project shelf. Click a project to see its Git snapshot or save a local note. The dog is a separate overlay that wanders between spots and changes poses on its own. It stays hungry until you offer a treat; feeding plays the catch-and-chew poses, then the dog settles into its fed routine. Click the dog to give it a pat.
+Bench is a local developer dashboard. It discovers Git repositories in folders you choose, records their current status in SQLite, and gives them a home on a small pixel-art project shelf. Click a project to see its Git snapshot or save a local note. The dog is a separate overlay that stays at the right side and changes poses on its own. It stays hungry until you offer a treat; feeding plays the catch-and-chew poses, then the dog settles into its fed routine. Click the dog to give it a pat.
 
 ## Run
 
