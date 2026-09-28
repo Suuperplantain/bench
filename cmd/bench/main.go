@@ -79,7 +79,8 @@ func main() {
 		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      15 * time.Second,
+		// Repository chat streams can run longer than an ordinary API response.
+		WriteTimeout:      0,
 		IdleTimeout:       60 * time.Second,
 	}
 

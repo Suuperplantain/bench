@@ -146,3 +146,28 @@ func TestNoteRequestValidation(t *testing.T) {
 		t.Fatalf("invalid request status = %d, want %d", response.StatusCode, http.StatusBadRequest)
 	}
 }
+
+func TestChatRejectsForeignOriginsAndUnknownProjects(t *testing.T) {
+	database, err := store.Open(filepath.Join(t.TempDir(), "bench.db"))
+	if err != nil { t.Fatal(err) }
+	defer database.Close()
+	server := httptest.NewServer(NewHandler(discovery.New(nil), database))
+	defer server.Close()
+
+	request, err := http.NewRequest(http.MethodPost, server.URL+"/api/projects/missing/chat", strings.NewReader(`{"message":"change a file"}`))
+	if err != nil { t.Fatal(err) }
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Origin", "https://example.com")
+	response, err := http.DefaultClient.Do(request)
+	if err != nil { t.Fatal(err) }
+	response.Body.Close()
+	if response.StatusCode != http.StatusForbidden { t.Fatalf("foreign Origin status = %d, want %d", response.StatusCode, http.StatusForbidden) }
+
+	request, err = http.NewRequest(http.MethodPost, server.URL+"/api/projects/missing/chat", strings.NewReader(`{"message":"change a file"}`))
+	if err != nil { t.Fatal(err) }
+	request.Header.Set("Content-Type", "application/json")
+	response, err = http.DefaultClient.Do(request)
+	if err != nil { t.Fatal(err) }
+	response.Body.Close()
+	if response.StatusCode != http.StatusNotFound { t.Fatalf("unknown project chat status = %d, want %d", response.StatusCode, http.StatusNotFound) }
+}

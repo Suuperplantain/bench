@@ -6,6 +6,8 @@ const projectDialog = document.querySelector('#project-dialog');
 const addDialog = document.querySelector('#add-dialog');
 let projects = [];
 let selectedProject = null;
+let chatBusy = false;
+const chatHistories = (() => { try { return JSON.parse(localStorage.getItem('bench-chat-histories') || '{}'); } catch { return {}; } })();
 const scrollAssets = {
   priority: ['/assets/scroll-priority.png', 'Priority'],
   'in-progress': ['/assets/scroll-in-progress.png', 'In progress'],
@@ -130,8 +132,144 @@ function openProject(project) {
     cell.append(heading, detail);
     grid.append(cell);
   });
+  renderChat(project);
   projectDialog.showModal();
 }
+
+function saveChatHistories() {
+  try { localStorage.setItem('bench-chat-histories', JSON.stringify(chatHistories)); } catch { /* The active chat still works if storage is full or unavailable. */ }
+}
+
+function appendChatMessage(role, text, container = document.querySelector('#chat-messages')) {
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-message ' + role;
+  bubble.textContent = text;
+  container.append(bubble);
+  container.scrollTop = container.scrollHeight;
+  return bubble;
+}
+
+function renderChat(project) {
+  const messages = document.querySelector('#chat-messages');
+  messages.replaceChildren();
+  document.querySelector('#chat-status').textContent = 'Changes stay in this repository.';
+  document.querySelector('#chat-scope').textContent = 'REPO SCOPED';
+  const history = chatHistories[project.id] || [];
+  if (!history.length) {
+    const welcome = document.createElement('p');
+    welcome.className = 'chat-welcome';
+    const title = document.createElement('strong');
+    title.textContent = 'Let’s work on ' + project.name;
+    const description = document.createElement('span');
+    description.textContent = 'Ask a question or describe a change. Codex will receive this repository as its working directory.';
+    welcome.append(title, description);
+    messages.append(welcome);
+    return;
+  }
+  history.forEach(message => appendChatMessage(message.role, message.text, messages));
+}
+
+function saveChatMessage(projectID, role, text) {
+  const history = chatHistories[projectID] || (chatHistories[projectID] = []);
+  history.push({ role, text });
+  if (history.length > 60) history.splice(0, history.length - 60);
+  saveChatHistories();
+}
+
+function parseChatEvent(block) {
+  let type = '';
+  let data = '';
+  block.split(/\r?\n/).forEach(line => {
+    if (line.startsWith('event:')) type = line.slice(6).trim();
+    if (line.startsWith('data:')) data += line.slice(5).trim();
+  });
+  if (!type || !data) return null;
+  try { return { type, payload: JSON.parse(data) }; } catch { return null; }
+}
+
+document.querySelector('#chat-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!selectedProject) return;
+  const project = selectedProject;
+  const input = document.querySelector('#chat-input');
+  const send = document.querySelector('#chat-send');
+  const status = document.querySelector('#chat-status');
+  const message = input.value.trim();
+  if (!message) return;
+  document.querySelector('.chat-welcome')?.remove();
+  appendChatMessage('user', message);
+  saveChatMessage(project.id, 'user', message);
+  input.value = '';
+  input.disabled = true;
+  send.disabled = true;
+  chatBusy = true;
+  document.querySelector('.project-dialog .dialog-close').disabled = true;
+  status.textContent = 'Codex is working…';
+  let assistantBubble = null;
+  let assistantText = '';
+  try {
+    const response = await fetch('/api/projects/' + encodeURIComponent(project.id) + '/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message }),
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.error || 'Chat request failed (' + response.status + ')');
+    }
+    if (!response.body) throw new Error('Streaming responses are not supported in this browser.');
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffered = '';
+    let finished = false;
+    while (!finished) {
+      const { value, done } = await reader.read();
+      buffered += decoder.decode(value || new Uint8Array(), { stream: !done });
+      const blocks = buffered.split(/\r?\n\r?\n/);
+      buffered = blocks.pop() || '';
+      for (const block of blocks) {
+        const item = parseChatEvent(block);
+        if (!item) continue;
+        if (item.type === 'thread') document.querySelector('#chat-scope').textContent = 'CONNECTED TO REPO';
+        if (item.type === 'delta') {
+          if (!assistantBubble) assistantBubble = appendChatMessage('assistant', '');
+          assistantText += item.payload.text || '';
+          assistantBubble.textContent = assistantText;
+          document.querySelector('#chat-messages').scrollTop = document.querySelector('#chat-messages').scrollHeight;
+        }
+        if (item.type === 'done') {
+          finished = true;
+          if (assistantText) saveChatMessage(project.id, 'assistant', assistantText);
+          status.textContent = 'Ready · working in ' + project.name;
+        }
+        if (item.type === 'error') {
+          const error = item.payload.text || 'Codex could not complete that request.';
+          appendChatMessage('error', error);
+          saveChatMessage(project.id, 'error', error);
+          status.textContent = 'Chat needs attention';
+          finished = true;
+        }
+      }
+      if (done) break;
+    }
+    if (!assistantText && status.textContent === 'Codex is working…') status.textContent = 'Ready';
+  } catch (error) {
+    const message = error.message || 'Codex could not complete that request.';
+    appendChatMessage('error', message);
+    saveChatMessage(project.id, 'error', message);
+    status.textContent = 'Chat needs attention';
+  } finally {
+    chatBusy = false;
+    document.querySelector('.project-dialog .dialog-close').disabled = false;
+    input.disabled = false;
+    send.disabled = false;
+    input.focus();
+  }
+});
+
+projectDialog.addEventListener('cancel', event => {
+  if (chatBusy) event.preventDefault();
+});
 
 document.querySelector('#save-note').addEventListener('click', async event => {
   if (!selectedProject) return;

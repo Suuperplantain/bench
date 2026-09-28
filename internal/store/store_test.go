@@ -53,3 +53,17 @@ func TestSaveNoteRejectsUnknownProject(t *testing.T) {
 		t.Fatalf("SaveNote() error = %v, want ErrProjectNotFound", err)
 	}
 }
+
+func TestProjectChatThreadPersistsPerRepository(t *testing.T) {
+	database, err := Open(filepath.Join(t.TempDir(), "bench.db"))
+	if err != nil { t.Fatal(err) }
+	defer database.Close()
+	ctx := context.Background()
+	project := discovery.Project{ID: "project-chat", Name: "sample", Path: t.TempDir(), Language: "Go", Branch: "main"}
+	if err := database.SyncProjects(ctx, []discovery.Project{project}); err != nil { t.Fatal(err) }
+	threadID, err := database.ChatThreadID(ctx, project.ID)
+	if err != nil || threadID != "" { t.Fatalf("initial thread = %q, %v; want empty", threadID, err) }
+	if err := database.SaveChatThreadID(ctx, project.ID, "thr_repo_123"); err != nil { t.Fatal(err) }
+	threadID, err = database.ChatThreadID(ctx, project.ID)
+	if err != nil || threadID != "thr_repo_123" { t.Fatalf("saved thread = %q, %v", threadID, err) }
+}

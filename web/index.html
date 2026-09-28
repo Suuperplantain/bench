@@ -77,21 +77,37 @@
     </aside>
     <dialog class="project-dialog" id="project-dialog" aria-labelledby="dialog-title">
       <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
-      <p class="dialog-eyebrow" id="dialog-eyebrow">ON THE SHELF</p>
-      <h2 id="dialog-title"></h2>
-      <p class="dialog-path" id="dialog-path"></p>
-      <div class="detail-grid" id="detail-grid"></div>
-      <label class="note-label" for="project-status">Shelf status</label>
-      <select id="project-status" class="project-status-select">
-        <option value="priority">Priority</option>
-        <option value="in-progress">In progress</option>
-        <option value="done">Done</option>
-      </select>
-      <label class="note-label" for="project-note">A note for later</label>
-      <textarea id="project-note" maxlength="2000" rows="3" placeholder="What were you working on? Add a reminder…"></textarea>
-      <div class="dialog-actions">
-        <span id="note-status" aria-live="polite"></span>
-        <button class="save-note" id="save-note" type="button">Save note</button>
+      <div class="project-workspace">
+        <section class="project-overview" aria-label="Project details">
+          <p class="dialog-eyebrow" id="dialog-eyebrow">ON THE SHELF</p>
+          <h2 id="dialog-title"></h2>
+          <p class="dialog-path" id="dialog-path"></p>
+          <div class="detail-grid" id="detail-grid"></div>
+          <label class="note-label" for="project-status">Shelf status</label>
+          <select id="project-status" class="project-status-select">
+            <option value="priority">Priority</option>
+            <option value="in-progress">In progress</option>
+            <option value="done">Done</option>
+          </select>
+          <label class="note-label" for="project-note">A note for later</label>
+          <textarea id="project-note" maxlength="2000" rows="3" placeholder="What were you working on? Add a reminder…"></textarea>
+          <div class="dialog-actions">
+            <span id="note-status" aria-live="polite"></span>
+            <button class="save-note" id="save-note" type="button">Save note</button>
+          </div>
+        </section>
+        <section class="project-chat" aria-label="Repository chat">
+          <header class="chat-header">
+            <div><p class="dialog-eyebrow">WORK ON THIS REPOSITORY</p><h3>Codex chat</h3></div>
+            <span class="chat-scope" id="chat-scope">REPO SCOPED</span>
+          </header>
+          <div class="chat-messages" id="chat-messages" aria-live="polite" aria-relevant="additions text"></div>
+          <form class="chat-composer" id="chat-form">
+            <label class="visually-hidden" for="chat-input">Message Codex about this repository</label>
+            <textarea id="chat-input" maxlength="8000" rows="3" placeholder="Ask about this repo, or tell Codex what to change…" required></textarea>
+            <div class="chat-composer-bottom"><span id="chat-status">Changes stay in this repository.</span><button class="save-note" id="chat-send" type="submit">Send ↗</button></div>
+          </form>
+        </section>
       </div>
     </dialog>
     <dialog class="add-dialog" id="add-dialog" aria-labelledby="add-dialog-title">

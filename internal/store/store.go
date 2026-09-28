@@ -43,12 +43,33 @@ CREATE TABLE IF NOT EXISTS project_notes (
     project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
     body TEXT NOT NULL DEFAULT '',
     updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS project_chat_threads (
+    project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+    thread_id TEXT NOT NULL,
+    updated_at TEXT NOT NULL
 );`
 	if _, err := database.Exec(schema); err != nil {
 		database.Close()
 		return nil, fmt.Errorf("create sqlite schema: %w", err)
 	}
 	return &Store{db: database}, nil
+}
+
+func (store *Store) ChatThreadID(ctx context.Context, projectID string) (string, error) {
+	var threadID string
+	err := store.db.QueryRowContext(ctx, `SELECT thread_id FROM project_chat_threads WHERE project_id = ?`, projectID).Scan(&threadID)
+	if errors.Is(err, sql.ErrNoRows) { return "", nil }
+	if err != nil { return "", fmt.Errorf("read project chat thread: %w", err) }
+	return threadID, nil
+}
+
+func (store *Store) SaveChatThreadID(ctx context.Context, projectID, threadID string) error {
+	_, err := store.db.ExecContext(ctx, `INSERT INTO project_chat_threads(project_id, thread_id, updated_at)
+VALUES (?, ?, ?) ON CONFLICT(project_id) DO UPDATE SET thread_id = excluded.thread_id, updated_at = excluded.updated_at`,
+		projectID, threadID, time.Now().UTC().Format(time.RFC3339Nano))
+	if err != nil { return fmt.Errorf("save project chat thread: %w", err) }
+	return nil
 }
 
 func (store *Store) Close() error { return store.db.Close() }
