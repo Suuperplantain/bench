@@ -2,7 +2,7 @@
   const overlay = document.querySelector('#pet-overlay');
   const button = document.querySelector('#pet-button');
   const sprite = document.querySelector('#pet-sprite');
-  const speech = document.querySelector('#pet-speech');
+  const barkBubble = document.querySelector('#pet-bark');
   const feedButton = document.querySelector('#pet-feed');
   const caption = document.querySelector('#pet-caption');
   const treatCount = document.querySelector('#treat-count');
@@ -43,6 +43,7 @@
   let hoveringScroll = false;
   let speechTimer;
   let sleepTimer;
+  let barkAudio;
 
   function clamp(value, minimum, maximum, fallback) {
     const number = Number(value);
@@ -58,11 +59,41 @@
     try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch { /* Keep the pet usable when storage is unavailable. */ }
   }
 
-  function say(message, duration = 2600) {
+  function playBark() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      barkAudio ||= new AudioContext();
+      if (barkAudio.state === 'suspended') barkAudio.resume().catch(() => {});
+      const now = barkAudio.currentTime;
+      [0, 0.17].forEach(offset => {
+        const start = now + offset;
+        const voice = barkAudio.createOscillator();
+        const shape = barkAudio.createBiquadFilter();
+        const envelope = barkAudio.createGain();
+        voice.type = 'sawtooth';
+        voice.frequency.setValueAtTime(250, start);
+        voice.frequency.exponentialRampToValueAtTime(105, start + 0.12);
+        shape.type = 'bandpass';
+        shape.frequency.setValueAtTime(780, start);
+        shape.frequency.exponentialRampToValueAtTime(430, start + 0.12);
+        shape.Q.value = 1.1;
+        envelope.gain.setValueAtTime(0.0001, start);
+        envelope.gain.exponentialRampToValueAtTime(0.12, start + 0.015);
+        envelope.gain.exponentialRampToValueAtTime(0.0001, start + 0.14);
+        voice.connect(shape).connect(envelope).connect(barkAudio.destination);
+        voice.start(start);
+        voice.stop(start + 0.15);
+      });
+    } catch { /* Keep the visual bark working when audio is unavailable. */ }
+  }
+
+  function showBark(message = 'Woof!', duration = 2400, withSound = true) {
     clearTimeout(speechTimer);
-    speech.textContent = message;
-    speech.hidden = !message;
-    if (message) speechTimer = setTimeout(() => { speech.hidden = true; }, duration);
+    barkBubble.textContent = message;
+    barkBubble.hidden = !message;
+    if (message && withSound) playBark();
+    if (message) speechTimer = setTimeout(() => { barkBubble.hidden = true; }, duration);
   }
 
   function pose(name) {
@@ -124,7 +155,7 @@
     clearTimeout(sleepTimer);
     pose('sleep');
     render();
-    if (manual) say('I’m off for a rest.');
+    if (manual) showBark('Ruff!');
   }
 
   function startInactivityTimer() {
@@ -147,7 +178,7 @@
     if (state.sleeping) wake();
     if (!availableTreats()) {
       render();
-      say(`${TREAT_EVERY - (commitTotal % TREAT_EVERY)} more commit${TREAT_EVERY - (commitTotal % TREAT_EVERY) === 1 ? '' : 's'} for a treat.`);
+      showBark('Ruff!');
       return;
     }
     state.treatsUsed += 1;
@@ -161,7 +192,7 @@
     const frameDelay = 720;
     let index = 0;
     pose(eatingSequence[index]);
-    say('Here comes your treat.', 5200);
+    showBark('Woof!', 5200);
     const eatingTimer = setInterval(() => {
       index += 1;
       if (index >= eatingSequence.length) {
@@ -171,7 +202,7 @@
         pose(state.sleeping ? 'sleep' : hoveringScroll ? 'wave' : 'sit');
         render();
         save();
-        say('Good lad. Thanks for the treat.');
+        showBark('Arf!');
         return;
       }
       pose(eatingSequence[index]);
@@ -191,7 +222,7 @@
   ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(type => {
     document.addEventListener(type, noteActivity, { passive: true });
   });
-  button.addEventListener('click', () => { if (!busy) say(state.sleeping ? 'Shh… I’m dreaming.' : 'Hey there.'); });
+  button.addEventListener('click', () => { if (!busy) showBark(state.sleeping ? 'Zzz…' : 'Woof!', 2400, !state.sleeping); });
   feedButton.addEventListener('click', feed);
   sleepButton.addEventListener('click', () => {
     if (state.sleeping) wake();

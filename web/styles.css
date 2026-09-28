@@ -114,16 +114,16 @@ button { color: inherit; }
 .pet-feed span { color: #f1c36d; }
 .pet-feed:hover { background: #553923; transform: translateY(-2px); }
 .pet-feed:disabled { cursor: wait; opacity: .78; }
-.pet-speech { margin: 0; }
+.pet-bark { margin: 0; }
 .pet-button { position: relative; width: 100%; height: clamp(160px,19vw,238px); padding: 0; border: 0; background: transparent; cursor: pointer; pointer-events: auto; filter: drop-shadow(0 10px 8px rgba(23,12,6,.48)); }
 .pet-button:hover { filter: drop-shadow(0 12px 9px rgba(23,12,6,.58)); }
 .pet-button:focus-visible { outline: 2px solid #f5c77f; outline-offset: 4px; border-radius: 18px; }
 .pet-button img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: bottom; image-rendering: pixelated; }
 .pet-caption { position: absolute; right: 2px; bottom: -3px; padding: 5px 8px; color: #f4dfc1; font-size: 7px; border: 1px solid rgba(250,225,190,.25); border-radius: 5px; background: rgba(45,28,18,.86); }
 .pet-caption span { color: #f1c36d; }
-.pet-speech { position: relative; max-width: 150px; padding: 9px 12px; border: 1px solid rgba(69,45,26,.2); border-radius: 10px 10px 2px 10px; color: #422b1b; background: #f9edda; box-shadow: 0 5px 15px rgba(19,10,5,.22); font-size: 11px; animation: speech-in .28s ease both; }
-.pet-speech[hidden] { display: none; }
-@keyframes speech-in { from { opacity: 0; transform: translateY(5px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.pet-bark { position: relative; max-width: 150px; padding: 8px 11px; border: 2px solid #4a3020; border-radius: 2px; color: #4a3020; background: #f9edda; box-shadow: 2px 3px 0 rgba(19,10,5,.4); font: 700 13px 'Grenze Gotisch','IM Fell English',Georgia,serif; image-rendering: pixelated; animation: bark-pop .16s steps(2,end) both; }
+.pet-bark[hidden] { display: none; }
+@keyframes bark-pop { from { opacity: 0; transform: translateY(4px) scale(.86); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .pet-button.is-feeding { cursor: default; }
 .pet-button.is-feeding:hover { transform: none; }
 .pet-hungry .pet-caption { color: #f5cf8f; }
@@ -271,8 +271,8 @@ dialog::backdrop { background: rgba(18,11,8,.62); backdrop-filter: blur(4px); }
   .pet-meter-row { grid-template-columns: 42px 1fr 27px; gap: 4px; margin-top: 6px; }
   .pet-hunger-row { grid-template-columns: 42px 1fr 27px; gap: 4px; margin-top: 0; }
   .pet-health-row { grid-template-columns: 23px 1fr 27px; gap: 5px; }
-  .pet-speech { max-width: 125px; padding: 8px 9px; font-size: 10px; }
-  .pet-caption { font-size: 6px; } .pet-speech { font-size: 10px; }
+  .pet-bark { max-width: 125px; padding: 7px 9px; font-size: 10px; }
+  .pet-caption { font-size: 6px; }
   .room-footer { bottom: 9px; font-size: 6px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
