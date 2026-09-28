@@ -32,7 +32,16 @@ Install Go, then from this directory:
 go run ./cmd/bench -root "C:\path\to\projects"
 ```
 
-To use the repository chat, install Codex CLI and sign in once with `codex login`. Bench starts Codex App Server locally for each chat turn and uses that existing Codex login; Bench does not need an OpenAI API key. The chat uses the account’s configured Codex model and limits file changes to the selected repository.
+### Connect repository chat to your Codex account
+
+Each person who runs Bench connects their own Codex CLI login on their own machine. Bench does not contain the repository owner’s credentials, and cloning this repository does not give anyone access to another person’s Codex account. The chat runs locally under the operating-system account that started Bench, using that account’s Codex CLI session.
+
+1. Install the [Codex CLI](https://developers.openai.com/codex/cli/).
+2. In a terminal, run `codex login` and complete sign-in to your own Codex account.
+3. Run `codex login status` to confirm that the CLI is signed in.
+4. Start Bench with `go run ./cmd/bench -root "C:\\path\\to\\projects"`, then open a project scroll and send a message.
+
+Bench starts Codex App Server locally for each chat turn. It uses the signed-in account’s configured Codex model and limits file changes to the selected repository. No API key is required. Sign-in and chat history stay on the machine running Bench; the chat thread identifier is stored in that machine’s local `.bench` database.
 
 Open <http://127.0.0.1:7341> after Bench starts. The Go server serves the frontend from the web directory and the API from /api/; no separate frontend build is needed. Pass `-root` more than once to scan several folders. Bench does one full discovery scan when it starts, then keeps the project list in SQLite. Reloading the shelf only reads that saved list. When you add a project, Bench checks only that path and requires it to be inside one of the configured roots. Bench listens only on `127.0.0.1:7341` by default and stores its database under `.bench/` in the current directory. Use `-listen` or `-db` to change those settings.
 
