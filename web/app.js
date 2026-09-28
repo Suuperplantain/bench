@@ -86,6 +86,9 @@ async function loadProjects() {
   try {
     const result = await request('/api/projects');
     projects = result.projects || [];
+    window.dispatchEvent(new CustomEvent('bench:commit-total', {
+      detail: projects.reduce((total, project) => total + (Number(project.commit_count) || 0), 0),
+    }));
     renderProjects();
     connectionLabel.textContent = 'CONNECTED · LOCAL ONLY';
   } catch (error) {

@@ -1,6 +1,6 @@
 # Bench
 
-Bench is a local developer dashboard. It discovers Git repositories in folders you choose, records their current status in SQLite, and gives them a home on a small pixel-art project shelf. Each project is displayed as a scroll. Open one to see its Git snapshot, set its shelf status (red for priority, orange for in progress, green for done), save a local note, or open a Codex chat scoped to that repository. The chat sits beside the project details and keeps one conversation per repository. Codex can read and edit files in the selected repository; its workspace-write sandbox is restricted to that project folder, and its configured network access supports Git remote work. Shelf statuses and the visible chat transcript are kept in this browser, while the Codex thread ID is stored in Bench’s local SQLite database. A plant decorates the lowest shelf. The dog stays at the right side, alternating between sitting poses every half second. It raises a paw while you hover a project scroll and sleeps after ten minutes without activity. Offering it a treat still plays its catch-and-chew poses.
+Bench is a local developer dashboard. It discovers Git repositories in folders you choose, records their current status in SQLite, and gives them a home on a small pixel-art project shelf. Each project is displayed as a scroll. Open one to see its Git snapshot, set its shelf status (red for priority, orange for in progress, green for done), save a local note, or open a Codex chat scoped to that repository. The chat sits beside the project details and keeps one conversation per repository. Codex can read and edit files in the selected repository; its workspace-write sandbox is restricted to that project folder, and its configured network access supports Git remote work. Shelf statuses and the visible chat transcript are kept in this browser, while the Codex thread ID is stored in Bench’s local SQLite database. A plant decorates the lowest shelf. The dog stays at the right side, raises a paw while you hover a project scroll, and sleeps after ten minutes without activity (or when you tell him to). His hunger empties in 25 minutes; health drains to zero over five hours awake or fifteen hours asleep. One treat is earned for every seven commits across saved repositories. Feeding cycles through the four chewing poses and restores hunger.
 
 ## Run
 
@@ -27,7 +27,7 @@ Raise `-Tolerance` to remove a less pure white backdrop; lower it to preserve pa
 ## API
 
 - `GET /api/health` — service health
-- `GET /api/projects` — saved project list and notes; no filesystem scan
+- `GET /api/projects` — saved project list, notes, and current commit counts; no filesystem scan
 - `POST /api/projects` — inspect and add one Git repository: `{"path":"C:\\path\\to\\repo"}`
 - `PUT /api/projects/{id}/note` — save or clear a project note
 - `POST /api/projects/{id}/chat` — stream a Codex response for the selected repository using server-sent events

@@ -19,11 +19,30 @@ import (
 func TestProjectsAndNotesFlow(t *testing.T) {
 	root := t.TempDir()
 	repository := filepath.Join(root, "sample")
-	if err := os.MkdirAll(filepath.Join(repository, ".git"), 0o755); err != nil {
+	if err := os.MkdirAll(repository, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(repository, "go.mod"), []byte("module example.test/sample\n"), 0o600); err != nil {
 		t.Fatal(err)
+	}
+	if output, err := exec.Command("git", "-C", repository, "init", "-q").CombinedOutput(); err != nil {
+		t.Fatalf("initialize sample repository: %v: %s", err, output)
+	}
+	for _, setting := range [][]string{{"user.name", "Bench Test"}, {"user.email", "bench-test@example.invalid"}} {
+		if output, err := exec.Command("git", "-C", repository, "config", setting[0], setting[1]).CombinedOutput(); err != nil {
+			t.Fatalf("configure sample repository: %v: %s", err, output)
+		}
+	}
+	for index, content := range []string{"first", "second"} {
+		if err := os.WriteFile(filepath.Join(repository, "sample.txt"), []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if output, err := exec.Command("git", "-C", repository, "add", ".").CombinedOutput(); err != nil {
+			t.Fatalf("stage sample commit %d: %v: %s", index+1, err, output)
+		}
+		if output, err := exec.Command("git", "-C", repository, "commit", "-qm", "sample change").CombinedOutput(); err != nil {
+			t.Fatalf("create sample commit %d: %v: %s", index+1, err, output)
+		}
 	}
 
 	scanner := discovery.New([]string{root})
@@ -56,6 +75,9 @@ func TestProjectsAndNotesFlow(t *testing.T) {
 	response.Body.Close()
 	if response.StatusCode != http.StatusOK || len(projectsResponse.Projects) != 1 {
 		t.Fatalf("GET /api/projects status=%d projects=%+v", response.StatusCode, projectsResponse.Projects)
+	}
+	if projectsResponse.Projects[0].CommitCount != 2 {
+		t.Fatalf("GET /api/projects commit count = %d, want 2", projectsResponse.Projects[0].CommitCount)
 	}
 
 	projectID := projectsResponse.Projects[0].ID
@@ -149,25 +171,39 @@ func TestNoteRequestValidation(t *testing.T) {
 
 func TestChatRejectsForeignOriginsAndUnknownProjects(t *testing.T) {
 	database, err := store.Open(filepath.Join(t.TempDir(), "bench.db"))
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer database.Close()
 	server := httptest.NewServer(NewHandler(discovery.New(nil), database))
 	defer server.Close()
 
 	request, err := http.NewRequest(http.MethodPost, server.URL+"/api/projects/missing/chat", strings.NewReader(`{"message":"change a file"}`))
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Origin", "https://example.com")
 	response, err := http.DefaultClient.Do(request)
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	response.Body.Close()
-	if response.StatusCode != http.StatusForbidden { t.Fatalf("foreign Origin status = %d, want %d", response.StatusCode, http.StatusForbidden) }
+	if response.StatusCode != http.StatusForbidden {
+		t.Fatalf("foreign Origin status = %d, want %d", response.StatusCode, http.StatusForbidden)
+	}
 
 	request, err = http.NewRequest(http.MethodPost, server.URL+"/api/projects/missing/chat", strings.NewReader(`{"message":"change a file"}`))
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	request.Header.Set("Content-Type", "application/json")
 	response, err = http.DefaultClient.Do(request)
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	response.Body.Close()
-	if response.StatusCode != http.StatusNotFound { t.Fatalf("unknown project chat status = %d, want %d", response.StatusCode, http.StatusNotFound) }
+	if response.StatusCode != http.StatusNotFound {
+		t.Fatalf("unknown project chat status = %d, want %d", response.StatusCode, http.StatusNotFound)
+	}
 }

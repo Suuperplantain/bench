@@ -10,6 +10,7 @@ type Project struct {
 	Language     string     `json:"language"`
 	Branch       string     `json:"branch"`
 	Dirty        bool       `json:"dirty"`
+	CommitCount  int        `json:"commit_count"`
 	LatestCommit string     `json:"latest_commit,omitempty"`
 	LastCommitAt *time.Time `json:"last_commit_at,omitempty"`
 	Note         string     `json:"note"`

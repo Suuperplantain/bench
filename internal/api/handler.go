@@ -10,8 +10,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Suuperplantain/bench/internal/codex"
 	"github.com/Suuperplantain/bench/internal/discovery"
@@ -154,6 +157,14 @@ func (handler *Handler) projects(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "project metadata could not be read")
 		return
+	}
+	for i := range projects {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		output, countErr := exec.CommandContext(ctx, "git", "-C", projects[i].Path, "rev-list", "--count", "HEAD").Output()
+		cancel()
+		if countErr == nil {
+			projects[i].CommitCount, _ = strconv.Atoi(strings.TrimSpace(string(output)))
+		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"projects": projects})
 }
