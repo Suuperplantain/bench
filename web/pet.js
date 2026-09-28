@@ -70,7 +70,6 @@
     if (!frame) return;
     sprite.src = frame[0];
     sprite.alt = frame[1];
-    sprite.classList.toggle('has-white-matte', name.startsWith('eat'));
   }
 
   function render() {

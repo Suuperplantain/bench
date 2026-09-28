@@ -94,11 +94,18 @@ button { color: inherit; }
 .treat-counter strong { grid-column: 2; grid-row: 1 / span 2; color: #53351f; font: 700 21px/1 'Grenze Gotisch','IM Fell English',serif; }
 .treat-counter small { color: #806747; font: 9px 'IM Fell English',Georgia,serif; }
 .pet-meter-row { display: grid; grid-template-columns: 45px 1fr 29px; align-items: center; gap: 6px; margin-top: 7px; }
+.pet-health-row { grid-template-columns: 25px 1fr 29px; gap: 7px; }
 .pet-meter-row output { color: #654b32; text-align: right; font: 10px 'IM Fell English',Georgia,serif; }
+.pet-heart-emblem { position: relative; display: block; width: 24px; height: 22px; filter: drop-shadow(1px 2px 0 #4b3424); }
+.pet-heart-emblem::before, .pet-heart-emblem::after { position: absolute; content: ''; clip-path: polygon(0 28%,18% 28%,18% 9%,38% 9%,38% 0,62% 0,62% 9%,82% 9%,82% 28%,100% 28%,100% 58%,82% 58%,82% 77%,62% 77%,62% 91%,38% 91%,38% 77%,18% 77%,18% 58%,0 58%); }
+.pet-heart-emblem::before { inset: 0; background: #39291f; }
+.pet-heart-emblem::after { inset: 3px 4px 4px; background: linear-gradient(145deg,#ff665a 0 20%,#e92734 21% 70%,#a90f21 71%); }
 .pet-meter { height: 8px; overflow: hidden; border: 1px solid rgba(79,51,28,.48); border-radius: 2px; background: rgba(76,48,26,.18); box-shadow: inset 0 1px 2px rgba(48,29,15,.22); }
 .pet-meter span { display: block; width: 100%; height: 100%; background: linear-gradient(90deg,#77904b,#a9b96b); transition: width .5s ease; }
-.pet-meter.pet-health span { background: linear-gradient(90deg,#b17a3e,#ddaf65); }
+.pet-meter.pet-health { position: relative; height: 15px; padding: 3px; overflow: hidden; border: 2px solid #3c2c22; border-radius: 0; background: #342820; box-shadow: 0 0 0 1px #d8aa5e, inset 0 0 0 1px rgba(255,231,175,.24); clip-path: polygon(3% 0,97% 0,100% 25%,100% 75%,97% 100%,3% 100%,0 75%,0 25%); }
+.pet-meter.pet-health span { background: linear-gradient(180deg,#ff6b60 0 20%,#f12a36 21% 70%,#bd1326 71%); box-shadow: inset 0 1px 0 rgba(255,190,150,.5); }
 .pet-meter.is-low span { background: linear-gradient(90deg,#9c4830,#cf7951); }
+.pet-meter.pet-health.is-low span { background: linear-gradient(180deg,#e34346 0 20%,#c51d2c 21% 70%,#8f101f 71%); }
 .pet-sleep-toggle { display: block; margin: 8px 0 0 auto; padding: 3px 7px; border: 1px solid rgba(91,57,31,.35); border-radius: 3px; color: #624326; background: rgba(255,246,218,.47); cursor: pointer; font: 10px 'IM Fell English',Georgia,serif; }
 .pet-sleep-toggle:hover { background: rgba(255,250,230,.82); }
 .pet-controls { display: flex; align-items: center; justify-content: flex-end; gap: 8px; pointer-events: auto; }
@@ -111,7 +118,6 @@ button { color: inherit; }
 .pet-button:hover { filter: drop-shadow(0 12px 9px rgba(23,12,6,.58)); }
 .pet-button:focus-visible { outline: 2px solid #f5c77f; outline-offset: 4px; border-radius: 18px; }
 .pet-button img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: bottom; image-rendering: pixelated; }
-.pet-button img.has-white-matte { mix-blend-mode: multiply; }
 .pet-caption { position: absolute; right: 2px; bottom: -3px; padding: 5px 8px; color: #f4dfc1; font-size: 7px; border: 1px solid rgba(250,225,190,.25); border-radius: 5px; background: rgba(45,28,18,.86); }
 .pet-caption span { color: #f1c36d; }
 .pet-speech { position: relative; max-width: 150px; padding: 9px 12px; border: 1px solid rgba(69,45,26,.2); border-radius: 10px 10px 2px 10px; color: #422b1b; background: #f9edda; box-shadow: 0 5px 15px rgba(19,10,5,.22); font-size: 11px; animation: speech-in .28s ease both; }
@@ -262,6 +268,7 @@ dialog::backdrop { background: rgba(18,11,8,.62); backdrop-filter: blur(4px); }
   .pet-feed { padding: 7px 8px; font-size: 9px; }
   .pet-vitals { padding: 7px 8px; }
   .pet-meter-row { grid-template-columns: 42px 1fr 27px; gap: 4px; margin-top: 6px; }
+  .pet-health-row { grid-template-columns: 23px 1fr 27px; gap: 5px; }
   .pet-speech { max-width: 125px; padding: 8px 9px; font-size: 10px; }
   .pet-caption { font-size: 6px; } .pet-speech { font-size: 10px; }
   .room-footer { bottom: 9px; font-size: 6px; }

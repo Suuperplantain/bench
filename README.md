@@ -1,6 +1,28 @@
 # Bench
 
-Bench is a local developer dashboard. It discovers Git repositories in folders you choose, records their current status in SQLite, and gives them a home on a small pixel-art project shelf. Each project is displayed as a scroll. Open one to see its Git snapshot, set its shelf status (red for priority, orange for in progress, green for done), save a local note, or open a Codex chat scoped to that repository. The chat sits beside the project details and keeps one conversation per repository. Codex can read and edit files in the selected repository; its workspace-write sandbox is restricted to that project folder, and its configured network access supports Git remote work. Shelf statuses and the visible chat transcript are kept in this browser, while the Codex thread ID is stored in Bench’s local SQLite database. A plant decorates the lowest shelf. The dog stays at the right side, raises a paw while you hover a project scroll, and sleeps after ten minutes without activity (or when you tell him to). His hunger empties in 25 minutes; health drains to zero over five hours awake or fifteen hours asleep. One treat is earned for every seven commits across saved repositories. Feeding cycles through the four chewing poses and restores hunger.
+Bench is a local-first dashboard for keeping development projects on one shelf. It scans folders you choose, records repository details in SQLite, and gives each project a status scroll. The app is being built as both a useful local tool and a small interactive pixel-art room: projects live on the shelf, a plant can be moved into place, and a Rottweiler companion reacts to project activity and treats.
+
+## Screenshots
+
+The shelf shows the saved projects, their status, the movable plant, and the pet's treat and health HUD. Feeding switches through the illustrated chewing poses; those frames now have transparent backgrounds so the room shows through.
+
+The project names in these screenshots are generic labels added for the captures.
+
+![Bench project shelf with project scrolls, plant, dog, and pixel-art health meter](docs/screenshots/project-shelf.png)
+
+![Bench dog eating a treat on the project shelf, with no white image backdrop](docs/screenshots/dog-eating.png)
+
+## Current state
+
+The Go server, local SQLite project index, initial discovery scan, and add-one-project flow are in place. Reloading the shelf reads saved records instead of rescanning every repository. Project scrolls show Git status and language, and their colors represent priority (red), in progress (orange), and done (green). Opening a scroll brings up repository-scoped Codex chat and a parchment-style side desk. The chat uses the local Codex App Server rather than a separate API key. Notes and visible chat history stay in the browser; the thread identifier and project index stay in the local database.
+
+The room also has a draggable plant, a dog fixed to the right side of the screen, petting and scroll-hover poses, sleep controls, a seven-commit treat counter, hunger and health timers, and four eating frames. The heart-shaped health meter and the eating cutouts are being refined against the pixel-art style. The desk's Desk, Changes, and Files views are currently a layout scaffold; wiring those views to live repository diffs and file browsing is still ahead. This is an active build, so the README tracks what works and what remains rather than presenting the unfinished parts as complete.
+
+## How it is built
+
+Bench keeps the backend deliberately small. The Go standard library serves the app and its HTTP API. The `internal/discovery` package inspects Git repositories, `internal/store` persists the project index in SQLite, `internal/api` exposes the local endpoints, and `internal/codex` connects chat turns to Codex App Server. The frontend is plain HTML, CSS, and JavaScript served directly by Go; there is no separate frontend build step.
+
+The local-first boundary is intentional: Bench binds to loopback by default, scans configured folders on startup, and only inspects a single requested path when adding a project. Project notes, chat transcripts, and the SQLite index are local data and are not part of this repository. The dog’s vitals live in browser storage. The repository contains the app code, pixel-art assets, and screenshot examples.
 
 ## Run
 
