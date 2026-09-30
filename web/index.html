@@ -3,137 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#24160f" />
-    <meta name="description" content="A local shelf for your development projects." />
-    <title>Bench — project shelf</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;600;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet" />
-    <link rel="preload" href="/assets/bench-study-room.png" as="image" />
-    <link rel="stylesheet" href="/styles.css" />
-    <link rel="stylesheet" href="/redesign.css" />
+    <meta name="theme-color" content="#08090c" />
+    <title>Bench — Orb Study</title>
+    <link rel="stylesheet" href="/orb-preview.css?v=orb-nod-1" />
+    <script src="/orb-preview.js?v=orb-nod-1" defer></script>
   </head>
   <body>
-    <main class="room" id="bench-room" aria-label="Bench project shelf" inert>
-      <div class="room-shade" aria-hidden="true"></div>
-      <header class="topbar">
-        <a class="brand" href="/" aria-label="Bench home">
-          <span class="brand-mark" aria-hidden="true">b.</span>
-          <span>bench<span class="brand-dot">/</span></span>
-        </a>
-        <div class="topbar-right">
-          <label class="project-search" for="project-search"><span aria-hidden="true">⌕</span><input id="project-search" type="search" placeholder="Find a project" autocomplete="off" /></label>
-          <span class="local-chip" title="Bench only connects to services on this computer"><i></i> LOCAL</span>
-          <button class="add-project" id="add-project-button" type="button"><span aria-hidden="true">＋</span> Add</button>
-        </div>
-      </header>
-      <div class="shelf-meta" aria-live="polite" aria-label="Project shelf">
-        <span id="project-count">Finding your projects…</span>
-        <button id="refresh-button" class="refresh-button" type="button" title="Refresh saved project details"><span aria-hidden="true">↻</span></button>
-      </div>
-      <section class="shelves" id="shelves" aria-label="Projects by status">
-        <section class="shelf-row shelf-priority" data-shelf="priority" aria-label="Priority"><header><span class="shelf-marker"></span><h2>Priority</h2><small data-shelf-count="priority">0</small></header><div class="shelf-scrolls"></div></section>
-        <section class="shelf-row shelf-progress" data-shelf="in-progress" aria-label="In progress"><header><span class="shelf-marker"></span><h2>In progress</h2><small data-shelf-count="in-progress">0</small></header><div class="shelf-scrolls"></div></section>
-        <section class="shelf-row shelf-done" data-shelf="done" aria-label="Done"><header><span class="shelf-marker"></span><h2>Done</h2><small data-shelf-count="done">0</small></header><div class="shelf-scrolls"></div></section>
-      </section>
-      <div class="shelf-decor">
-        <div class="plant-mover" id="plant-mover">
-          <button class="shelf-plant" id="shelf-plant" type="button" aria-label="Plant. Click to select, then drag to move. Double-click to reset." aria-expanded="false" title="Click to select, then drag. Use the compass arrows to nudge · double-click to reset">
-            <img src="/assets/plant.png" alt="Potted plant" draggable="false" />
-          </button>
-          <div class="plant-move-controls" id="plant-move-controls" role="group" aria-label="Move plant" hidden>
-            <button type="button" data-direction="north" aria-label="Move plant north">↑</button>
-            <button type="button" data-direction="east" aria-label="Move plant east">→</button>
-            <button type="button" data-direction="south" aria-label="Move plant south">↓</button>
-            <button type="button" data-direction="west" aria-label="Move plant west">←</button>
+    <main class="stage" aria-label="Orb preview">
+      <div class="ambient" aria-hidden="true"></div>
+      <section class="side-desk" id="side-desk" role="dialog" aria-label="Bench app" aria-modal="false" aria-hidden="true" inert>
+        <div class="desk-interior">
+          <div class="desk-topline">
+            <span class="desk-brand"><span class="desk-mark" aria-hidden="true"></span>BENCH</span>
+            <button class="desk-close" id="desk-close" type="button" aria-label="Minimise Bench">&minus;</button>
+          </div>
+          <div class="desk-body">
+            <aside class="repo-rail" aria-label="Repositories">
+              <div class="rail-heading"><span>REPOSITORIES</span><span id="repo-count"></span></div>
+              <div class="repo-list" id="repo-list" aria-live="polite"><p class="repo-message">Loading repositories…</p></div>
+              <button class="repo-reload" id="repo-reload" type="button">Refresh list</button>
+            </aside>
+            <section class="workspace" aria-label="Repository conversation">
+              <header class="workspace-header">
+                <span class="workspace-label">CONVERSATION</span>
+                <strong class="workspace-repo" id="workspace-repo">Choose a repository</strong>
+              </header>
+              <div class="conversation" id="conversation" aria-live="polite">
+                <p class="conversation-empty">Pick a repository on the left to start working.</p>
+              </div>
+              <form class="composer" id="chat-form">
+                <label class="sr-only" for="chat-input">Message Codex about this repository</label>
+                <textarea id="chat-input" rows="1" maxlength="8000" placeholder="Choose a repository first" disabled></textarea>
+                <button id="chat-send" type="submit" aria-label="Send message" disabled><span aria-hidden="true">↗</span></button>
+              </form>
+              <p class="chat-status" id="chat-status" role="status"></p>
+            </section>
           </div>
         </div>
-      </div>
-      <section class="empty-note" id="empty-note" hidden>
-        <span class="empty-icon" aria-hidden="true">⌂</span>
-        <p class="empty-title">Nothing on the shelf yet</p>
-        <p>Start Bench with a folder that contains your Git projects, or add one from its path.</p>
-        <code>go run ./cmd/bench -root "C:\path\to\projects"</code>
       </section>
-      <footer class="room-footer">
-        <span>BENCH · LOCAL PROJECT INDEX</span>
-        <span id="connection-state">CONNECTING TO YOUR WORKSPACE</span>
-      </footer>
-    </main>
-    <button class="bench-launcher" id="bench-launcher" type="button" aria-controls="bench-room" aria-expanded="false" title="Open Bench">
-      <span class="launcher-mark" aria-hidden="true">b.</span><span class="launcher-name">Bench</span><span class="launcher-signal" aria-hidden="true"></span>
-      <span class="launcher-count" id="launcher-project-count" aria-label="Projects">0</span>
-    </button>
-    <aside class="pet-overlay pet-hungry" id="pet-overlay" aria-label="Bench's dog">
-      <section class="pet-vitals" aria-label="Dog status">
-        <div class="treat-counter"><span>✦ TREATS</span><strong id="treat-count">0</strong><small id="commit-progress">0 / 7 commits</small></div>
-        <button class="pet-sleep-toggle" id="pet-sleep-toggle" type="button" aria-pressed="false">☾ Tell him to sleep</button>
-      </section>
-      <div class="pet-meter-row pet-hunger-row"><span>HUNGER</span><div class="pet-meter" id="pet-hunger" role="progressbar" aria-label="Hunger" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span id="pet-hunger-fill"></span></div><output id="pet-hunger-value">100%</output></div>
-      <div class="pet-meter-row pet-health-row" aria-label="Dog health"><span class="pet-heart-emblem" aria-hidden="true"></span><div class="pet-meter pet-health" id="pet-health" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span id="pet-health-fill"></span></div><output id="pet-health-value">100%</output></div>
-      <div class="pet-controls">
-        <div class="pet-bark" id="pet-bark" aria-live="polite" hidden></div>
-        <button class="pet-feed" id="pet-feed" type="button"><span aria-hidden="true">✦</span> Give a treat</button>
-      </div>
-      <button class="pet-button" id="pet-button" type="button" aria-label="Give Bench's dog a pat">
-        <img id="pet-sprite" src="/assets/pet-sit.png" alt="A pixel-art Rottweiler sitting" />
-        <span class="pet-caption" id="pet-caption">HUNGRY · BENCH’S BUDDY</span>
+      <button class="orb-launcher" id="orb-launcher" type="button" aria-label="Open Bench" aria-expanded="false" aria-controls="side-desk">
+        <span class="orb-aura" aria-hidden="true"></span>
+        <canvas class="corona" id="corona" aria-hidden="true"></canvas>
+        <span class="orb-core orb-face" data-look-range="6" aria-hidden="true">
+          <span class="orb-eyes"><span class="orb-eye"></span><span class="orb-eye"></span></span>
+        </span>
+        <span class="orb-focus" aria-hidden="true"></span>
       </button>
-    </aside>
-    <dialog class="project-dialog" id="project-dialog" aria-labelledby="dialog-title">
-      <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
-      <div class="project-workspace">
-        <section class="project-chat" aria-label="Repository chat">
-          <header class="chat-header">
-            <p class="dialog-eyebrow">THE SCRIBE’S DESK</p>
-            <h2 id="dialog-title" class="project-title"></h2>
-            <div class="chat-heading-row"><h3>Codex</h3><span class="chat-scope" id="chat-scope">REPO SCOPED</span></div>
-          </header>
-          <div class="chat-messages" id="chat-messages" aria-live="polite" aria-relevant="additions text"></div>
-          <form class="chat-composer" id="chat-form">
-            <label class="visually-hidden" for="chat-input">Message Codex about this repository</label>
-            <textarea id="chat-input" maxlength="8000" rows="3" placeholder="Write to Codex about this repository…" required></textarea>
-            <div class="chat-composer-bottom"><span id="chat-status">Changes stay in this repository.</span><button class="save-note" id="chat-send" type="submit">Send ↗</button></div>
-          </form>
-          <details class="notes-pocket">
-            <summary><span>Margin note</span><span class="notes-indicator" id="note-status" aria-live="polite">＋</span></summary>
-            <div class="notes-drawer">
-              <label class="visually-hidden" for="project-note">A private note for this repository</label>
-              <textarea id="project-note" maxlength="2000" rows="2" placeholder="A small reminder for later…"></textarea>
-              <button class="note-save" id="save-note" type="button">Save</button>
-            </div>
-          </details>
-        </section>
-        <section class="workbench" aria-label="Codex side workspace">
-          <header class="workbench-header">
-            <div><p class="dialog-eyebrow">OPEN SCROLL · WORKSPACE</p><h3>Codex’s side desk</h3></div>
-            <span class="workbench-state" id="workbench-state"><i></i> READY</span>
-          </header>
-          <nav class="workbench-tabs" aria-label="Workspace views" role="tablist">
-            <button type="button" class="workbench-tab is-active" id="tab-desk" role="tab" aria-controls="workbench-page" aria-selected="true" data-workspace-tab="desk">Desk</button>
-            <button type="button" class="workbench-tab" id="tab-changes" role="tab" aria-controls="workbench-page" aria-selected="false" data-workspace-tab="changes">Changes</button>
-            <button type="button" class="workbench-tab" id="tab-files" role="tab" aria-controls="workbench-page" aria-selected="false" data-workspace-tab="files">Files</button>
-          </nav>
-          <div class="workbench-page" id="workbench-page" role="tabpanel" aria-labelledby="tab-desk">
-          </div>
-        </section>
-      </div>
-    </dialog>
-    <dialog class="add-dialog" id="add-dialog" aria-labelledby="add-dialog-title">
-      <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
-      <p class="dialog-eyebrow">MAKE SOME ROOM</p>
-      <h2 id="add-dialog-title">Add a project</h2>
-      <p class="add-help">Paste the folder path of a Git repository inside one of Bench’s configured roots.</p>
-      <label class="note-label" for="project-path">Repository folder</label>
-      <input id="project-path" type="text" placeholder="C:\Users\you\Projects\my-app" autocomplete="off" />
-      <p class="form-error" id="add-error" role="alert"></p>
-      <div class="dialog-actions">
-        <span class="form-hint">Bench checks only this project path.</span>
-        <button class="save-note" id="submit-project" type="button">Add to shelf</button>
-      </div>
-    </dialog>
-    <script src="/app.js" defer></script>
-    <script src="/pet.js" defer></script>
-    <script src="/plant.js" defer></script>
+      <p class="stage-hint" id="stage-hint">CLICK THE ORB</p>
+    </main>
   </body>
 </html>

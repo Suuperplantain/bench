@@ -105,7 +105,7 @@ func (server *AppServer) RunTurn(ctx context.Context, cwd, threadID, prompt stri
 	threadParams := map[string]any{"cwd": cwd, "sandbox": "workspace-write", "approvalPolicy": "never", "approvalsReviewer": "user"}
 	method := "thread/start"
 	if threadID == "" {
-		threadParams["developerInstructions"] = "You are working inside Bench on the selected repository. Treat the current working directory as the complete scope for code changes. The user wants to discuss and edit this repository through the Bench chat. Be direct and honest, make requested code changes in the workspace, and run relevant checks. The user prefers their code changes to be committed and pushed consistently, using the repository's existing Git identity; never change or invent the author identity."
+		threadParams["developerInstructions"] = "You are working inside Bench on the selected repository. Treat the current working directory as the complete scope for code changes. The user wants to discuss and edit this repository through the Bench chat. Be direct and honest, make requested code changes in the workspace, and run relevant checks. Follow the user's instructions about committing or pushing changes; never change or invent the author identity."
 	} else {
 		method = "thread/resume"
 		threadParams["threadId"] = threadID
