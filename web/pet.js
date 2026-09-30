@@ -222,7 +222,13 @@
   ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(type => {
     document.addEventListener(type, noteActivity, { passive: true });
   });
-  button.addEventListener('click', () => { if (!busy) showBark(state.sleeping ? 'Zzz…' : 'Woof!', 2400, !state.sleeping); });
+  button.setAttribute('aria-expanded', 'false');
+  button.addEventListener('click', () => {
+    const expanded = !overlay.classList.contains('is-open');
+    overlay.classList.toggle('is-open', expanded);
+    button.setAttribute('aria-expanded', String(expanded));
+    if (!busy) showBark(state.sleeping ? 'Zzz…' : 'Woof!', 2400, !state.sleeping);
+  });
   feedButton.addEventListener('click', feed);
   sleepButton.addEventListener('click', () => {
     if (state.sleeping) wake();
@@ -232,6 +238,12 @@
   applyElapsedTime();
   pose(state.sleeping ? 'sleep' : 'sit');
   render();
+  let idlePose = false;
+  setInterval(() => {
+    if (busy || state.sleeping || hoveringScroll) return;
+    idlePose = !idlePose;
+    pose(idlePose ? 'happy' : 'sit');
+  }, 500);
   save();
   setInterval(() => {
     applyElapsedTime();

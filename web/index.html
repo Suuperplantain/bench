@@ -9,11 +9,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;600;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet" />
-    <link rel="preload" href="/assets/shelf-room.png" as="image" />
+    <link rel="preload" href="/assets/bench-study-room.png" as="image" />
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/redesign.css" />
   </head>
   <body>
-    <main class="room" aria-label="Bench project shelf">
+    <main class="room" id="bench-room" aria-label="Bench project shelf" inert>
       <div class="room-shade" aria-hidden="true"></div>
       <header class="topbar">
         <a class="brand" href="/" aria-label="Bench home">
@@ -21,28 +22,19 @@
           <span>bench<span class="brand-dot">/</span></span>
         </a>
         <div class="topbar-right">
-          <span class="local-chip"><i></i> LOCAL WORKSPACE</span>
-          <button class="add-project" id="add-project-button" type="button">
-            <span aria-hidden="true">＋</span> Add a project
-          </button>
+          <label class="project-search" for="project-search"><span aria-hidden="true">⌕</span><input id="project-search" type="search" placeholder="Find a project" autocomplete="off" /></label>
+          <span class="local-chip" title="Bench only connects to services on this computer"><i></i> LOCAL</span>
+          <button class="add-project" id="add-project-button" type="button"><span aria-hidden="true">＋</span> Add</button>
         </div>
       </header>
-      <section class="welcome" aria-labelledby="page-title">
-        <p class="eyebrow">YOUR WORK, IN ONE PLACE</p>
-        <h1 id="page-title">The project shelf</h1>
-        <p class="welcome-copy">A little home for the things you’re building.</p>
-      </section>
-      <div class="shelf-meta" aria-live="polite">
+      <div class="shelf-meta" aria-live="polite" aria-label="Project shelf">
         <span id="project-count">Finding your projects…</span>
-        <button id="refresh-button" class="refresh-button" type="button" title="Reload saved project details, without scanning again">
-          <span aria-hidden="true">↻</span> Reload shelf
-        </button>
+        <button id="refresh-button" class="refresh-button" type="button" title="Refresh saved project details"><span aria-hidden="true">↻</span></button>
       </div>
-      <section class="shelves" id="shelves" aria-label="Projects">
-        <div class="shelf-row" data-shelf="0"></div>
-        <div class="shelf-row" data-shelf="1"></div>
-        <div class="shelf-row" data-shelf="2"></div>
-        <div class="shelf-row" data-shelf="3"></div>
+      <section class="shelves" id="shelves" aria-label="Projects by status">
+        <section class="shelf-row shelf-priority" data-shelf="priority" aria-label="Priority"><header><span class="shelf-marker"></span><h2>Priority</h2><small data-shelf-count="priority">0</small></header><div class="shelf-scrolls"></div></section>
+        <section class="shelf-row shelf-progress" data-shelf="in-progress" aria-label="In progress"><header><span class="shelf-marker"></span><h2>In progress</h2><small data-shelf-count="in-progress">0</small></header><div class="shelf-scrolls"></div></section>
+        <section class="shelf-row shelf-done" data-shelf="done" aria-label="Done"><header><span class="shelf-marker"></span><h2>Done</h2><small data-shelf-count="done">0</small></header><div class="shelf-scrolls"></div></section>
       </section>
       <div class="shelf-decor">
         <div class="plant-mover" id="plant-mover">
@@ -68,6 +60,10 @@
         <span id="connection-state">CONNECTING TO YOUR WORKSPACE</span>
       </footer>
     </main>
+    <button class="bench-launcher" id="bench-launcher" type="button" aria-controls="bench-room" aria-expanded="false" title="Open Bench">
+      <span class="launcher-mark" aria-hidden="true">b.</span><span class="launcher-name">Bench</span><span class="launcher-signal" aria-hidden="true"></span>
+      <span class="launcher-count" id="launcher-project-count" aria-label="Projects">0</span>
+    </button>
     <aside class="pet-overlay pet-hungry" id="pet-overlay" aria-label="Bench's dog">
       <section class="pet-vitals" aria-label="Dog status">
         <div class="treat-counter"><span>✦ TREATS</span><strong id="treat-count">0</strong><small id="commit-progress">0 / 7 commits</small></div>

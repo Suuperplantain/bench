@@ -1,28 +1,26 @@
 # Bench
 
-Bench is a local-first dashboard for keeping development projects on one shelf. It scans folders you choose, records repository details in SQLite, and gives each project a status scroll. The app is being built as both a useful local tool and a small interactive pixel-art room: projects live on the shelf, a plant can be moved into place, and a Rottweiler companion reacts to project activity and treats.
+Bench is a local-first project shelf for working with Codex. Most of the time it stays tucked into a small bottom-left launcher. Open it when you want the room, choose a project scroll to continue its repository chat, and keep the dog and his controls in the opposite corner.
 
 ## Screenshots
 
-The shelf shows the saved projects, their status, the movable plant, and the pet's treat and health HUD. Feeding switches through the illustrated chewing poses; those frames now have transparent backgrounds so the room shows through.
+The browser preview opens as a compact launcher over a dark, quiet backdrop. Click **Bench** to unfold the room and show projects grouped by priority, in-progress, and done. Click the dog to open his smaller controls; his artwork stays on the right while the shelf is open.
 
-The project names in these screenshots are generic labels added for the captures.
+These screenshots are from the earlier full-page prototype and will be replaced once the floating-window shell is ready. Project names shown in those captures are generic examples.
 
-![Bench project shelf with project scrolls, plant, dog, and pixel-art health meter](docs/screenshots/project-shelf.png)
-
-![Bench dog eating a treat on the project shelf, with no white image backdrop](docs/screenshots/dog-eating.png)
+![Earlier Bench shelf prototype](docs/screenshots/project-shelf.png)
 
 ## Current state
 
-The Go server, local SQLite project index, initial discovery scan, and add-one-project flow are in place. Reloading the shelf reads saved records instead of rescanning every repository. Project scrolls show Git status and language, and their colors represent priority (red), in progress (orange), and done (green). Opening a scroll brings up a repository-scoped coding chat and a parchment-style side desk. Notes and visible chat history stay in the browser; the chat session identifier and project index stay in the local database.
+The Go server, local SQLite project index, initial discovery scan, and add-one-project flow are in place. Reloading the shelf reads saved records instead of rescanning every repository. The new room preview is a floating panel opened from a small bottom-left Bench launcher. Project scrolls are grouped by status—red for priority, orange for in progress, green for done—and can be searched and reassigned. Opening a scroll brings up a repository-scoped coding chat and a parchment-style side desk. Notes and visible chat history stay in the browser; the chat session identifier and project index stay in the local database.
 
-The room also has a draggable plant, a dog fixed to the right side of the screen, petting and scroll-hover poses, sleep controls, a seven-commit treat counter, hunger and health timers, and four eating frames. The floating heart meter and transparent eating sprites match the pixel-art room. The desk's Desk, Changes, and Files views are currently a layout scaffold; wiring those views to live repository diffs and file browsing is still ahead. This is an active build, so the README tracks what works and what remains rather than presenting the unfinished parts as complete.
+The room also has a draggable plant and a dog fixed to the right side of the screen. The dog alternates between two sitting poses, raises a paw when a project scroll is hovered, eats through four transparent frames when fed, and only sleeps after inactivity or when asked. A seven-commit treat counter, hunger cycle, and health timer are saved locally. The Desk, Changes, and Files views are currently a layout scaffold; wiring those views to live repository diffs and file browsing is still ahead.
 
 ## How it is built
 
 Bench keeps the backend deliberately small. The Go standard library serves the app and its HTTP API. The `internal/discovery` package inspects Git repositories, `internal/store` persists the project index in SQLite, and `internal/api` exposes the local endpoints. The frontend is plain HTML, CSS, and JavaScript served directly by Go; there is no separate frontend build step.
 
-The local-first boundary is intentional: Bench binds to loopback by default, scans configured folders on startup, and only inspects a single requested path when adding a project. Project notes, chat transcripts, and the SQLite index are local data and are not part of this repository. The dog’s vitals live in browser storage. The repository contains the app code, pixel-art assets, and screenshot examples.
+The local-first boundary is intentional: Bench binds to loopback by default, scans configured folders on startup, and only inspects a single requested path when adding a project. Project notes, chat transcripts, and the SQLite index are local data and are not part of this repository. The dog’s vitals live in browser storage. The repository contains the app code, pixel-art assets, and screenshot examples. The browser preview uses a dark fallback behind the transparent room; a native always-on-top Windows shell is a later milestone and this preview does not float above other desktop applications.
 
 ## Run
 

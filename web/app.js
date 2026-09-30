@@ -4,9 +4,14 @@ const connectionLabel = document.querySelector('#connection-state');
 const emptyNote = document.querySelector('#empty-note');
 const projectDialog = document.querySelector('#project-dialog');
 const addDialog = document.querySelector('#add-dialog');
+const searchInput = document.querySelector('#project-search');
+const launcherCount = document.querySelector('#launcher-project-count');
+const launcher = document.querySelector('#bench-launcher');
+const room = document.querySelector('#bench-room');
 let projects = [];
 let selectedProject = null;
 let chatBusy = false;
+let projectQuery = '';
 const chatHistories = (() => { try { return JSON.parse(localStorage.getItem('bench-chat-histories') || '{}'); } catch { return {}; } })();
 const scrollAssets = {
   priority: ['/assets/scroll-priority.png', 'Priority'],
@@ -31,18 +36,23 @@ async function request(url, options) {
 }
 
 function renderProjects() {
-  rows.forEach(row => row.replaceChildren());
+  rows.forEach(row => row.querySelector('.shelf-scrolls').replaceChildren());
   countLabel.textContent = projects.length + ' ' + (projects.length === 1 ? 'project' : 'projects') + ' on the shelf';
+  launcherCount.textContent = String(projects.length);
   emptyNote.hidden = projects.length !== 0;
-  const perShelf = window.matchMedia('(max-width: 720px)').matches ? 2 : 3;
-  projects.forEach((project, index) => {
-    const status = projectStatuses[project.id] || 'in-progress';
+  const totals = { priority: 0, 'in-progress': 0, done: 0 };
+  projects.forEach(project => {
+    const status = projectStatuses[project.id] || project.status || 'in-progress';
+    totals[status] += 1;
+    if (projectQuery && !project.name.toLocaleLowerCase().includes(projectQuery)) return;
     const [scrollImage, statusLabel] = scrollAssets[status] || scrollAssets['in-progress'];
-    const scroll = document.createElement('button');
-    scroll.type = 'button';
-    scroll.className = 'project-scroll';
-    scroll.title = statusLabel + ' · ' + project.name;
-    scroll.setAttribute('aria-label', project.name + ', ' + statusLabel + ', ' + (project.language || 'language not detected') + ', ' + (project.dirty ? 'uncommitted changes' : 'clean working tree') + '. Open project details.');
+    const scroll = document.createElement('article');
+    scroll.className = 'project-scroll project-scroll-' + status;
+    const openScroll = document.createElement('button');
+    openScroll.type = 'button';
+    openScroll.className = 'scroll-open';
+    openScroll.title = statusLabel + ' · ' + project.name;
+    openScroll.setAttribute('aria-label', project.name + ', ' + statusLabel + ', ' + (project.language || 'language not detected') + ', ' + (project.dirty ? 'uncommitted changes' : 'clean working tree') + '. Open project details.');
     const image = document.createElement('img');
     image.src = scrollImage;
     image.alt = '';
@@ -62,12 +72,30 @@ function renderProjects() {
     language.textContent = languageMark(project.language);
     copy.append(name, state);
     label.append(copy, language);
-    scroll.append(image, label);
-    scroll.addEventListener('mouseenter', () => window.dispatchEvent(new CustomEvent('bench:project-scroll-hover', { detail: true })));
-    scroll.addEventListener('mouseleave', () => window.dispatchEvent(new CustomEvent('bench:project-scroll-hover', { detail: false })));
-    scroll.addEventListener('click', () => openProject(project));
-    const shelfIndex = Math.max(0, rows.length - 1 - Math.floor(index / perShelf));
-    rows[shelfIndex].append(scroll);
+    openScroll.append(image, label);
+    scroll.append(openScroll);
+    const statusSelect = document.createElement('select');
+    statusSelect.className = 'scroll-status-select';
+    statusSelect.setAttribute('aria-label', 'Status for ' + project.name);
+    [['priority','Priority'],['in-progress','In progress'],['done','Done']].forEach(([value, text]) => {
+      const option = document.createElement('option'); option.value = value; option.textContent = text; option.selected = value === status; statusSelect.append(option);
+    });
+    statusSelect.addEventListener('click', event => event.stopPropagation());
+    statusSelect.addEventListener('change', event => {
+      event.stopPropagation(); projectStatuses[project.id] = statusSelect.value;
+      try { localStorage.setItem('bench-project-statuses', JSON.stringify(projectStatuses)); } catch { /* Status stays visible until reload. */ }
+      renderProjects();
+    });
+    scroll.append(statusSelect);
+    openScroll.addEventListener('mouseenter', () => window.dispatchEvent(new CustomEvent('bench:project-scroll-hover', { detail: true })));
+    openScroll.addEventListener('mouseleave', () => window.dispatchEvent(new CustomEvent('bench:project-scroll-hover', { detail: false })));
+    openScroll.addEventListener('click', () => openProject(project));
+    const shelf = rows.find(row => row.dataset.shelf === status) || rows[1];
+    shelf.querySelector('.shelf-scrolls').append(scroll);
+  });
+  Object.entries(totals).forEach(([status, count]) => {
+    const label = document.querySelector('[data-shelf-count="' + status + '"]');
+    if (label) label.textContent = String(count);
   });
 }
 
@@ -318,4 +346,17 @@ async function addProject() {
 document.querySelector('#submit-project').addEventListener('click', addProject);
 document.querySelector('#project-path').addEventListener('keydown', event => { if (event.key === 'Enter') addProject(); });
 document.querySelector('#refresh-button').addEventListener('click', loadProjects);
+searchInput.addEventListener('input', () => { projectQuery = searchInput.value.trim().toLocaleLowerCase(); renderProjects(); });
+
+function setRoomExpanded(expanded) {
+  room.classList.toggle('is-expanded', expanded);
+  room.inert = !expanded;
+  launcher.setAttribute('aria-expanded', String(expanded));
+  launcher.title = expanded ? 'Close Bench' : 'Open Bench';
+  if (window.benchWindow?.setExpanded) window.benchWindow.setExpanded(expanded).catch(() => {});
+}
+launcher.addEventListener('click', () => setRoomExpanded(!room.classList.contains('is-expanded')));
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !projectDialog.open && !addDialog.open) setRoomExpanded(false);
+});
 loadProjects();
