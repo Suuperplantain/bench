@@ -149,6 +149,7 @@ if (canvas && stage && launcher && desk && closeDesk) {
   const blinkTimers = new Map();
   let pointer = null;
   let gazeFrame = 0;
+  let orbVisibilityFrame = 0;
   let orbPointerInside = false;
   let transitioning = false;
   let genie = null;
@@ -164,6 +165,7 @@ if (canvas && stage && launcher && desk && closeDesk) {
       if (!clonedDesk) return;
       clonedDesk.style.setProperty("visibility", "visible", "important");
       clonedDesk.style.setProperty("opacity", "1", "important");
+      clonedDesk.querySelectorAll(".repo-orb").forEach(orb => { orb.style.display = "none"; });
     },
   });
   const orbPoint = () => {
@@ -317,6 +319,22 @@ if (canvas && stage && launcher && desk && closeDesk) {
     renderConversation();
   }
 
+  function updateOrbVisibility() {
+    orbVisibilityFrame = 0;
+    const orb = repoList.querySelector(".repo-orb");
+    if (!orb) return;
+    const bounds = orb.getBoundingClientRect();
+    const clip = repoList.getBoundingClientRect();
+    const glow = 10;
+    orb.classList.toggle("is-visible",
+      bounds.left - glow >= clip.left && bounds.right + glow <= clip.right &&
+      bounds.top - glow >= clip.top && bounds.bottom + glow <= clip.bottom);
+  }
+
+  function scheduleOrbVisibility() {
+    if (!orbVisibilityFrame) orbVisibilityFrame = window.requestAnimationFrame(updateOrbVisibility);
+  }
+
   function syncSelectedProject() {
     for (const entry of repoList.querySelectorAll(".repo-entry")) {
       const card = entry.querySelector(".repo-item");
@@ -346,6 +364,7 @@ if (canvas && stage && launcher && desk && closeDesk) {
         scheduleGaze();
       }
     }
+    scheduleOrbVisibility();
   }
 
   function renderProjects() {
@@ -614,6 +633,7 @@ if (canvas && stage && launcher && desk && closeDesk) {
     const card = event.target.closest(".repo-item");
     if (card) selectProject(card.dataset.projectId);
   });
+  repoList.addEventListener("scroll", scheduleOrbVisibility, { passive: true });
   repoReload.addEventListener("click", loadProjects);
   chatForm.addEventListener("submit", sendMessage);
   conversation.addEventListener("click", async event => {

@@ -223,7 +223,8 @@ button { font: inherit; }
 .repo-item[aria-pressed="true"] { background: #191e26; border-color: rgba(244, 248, 255, .82); }
 .repo-item[aria-pressed="true"] .repo-name { color: #fff; }
 .repo-item:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-.repo-orb { position: absolute; top: -31px; left: -29px; z-index: 0; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: radial-gradient(circle, rgba(227,235,248,.17) 17%, rgba(205,217,236,.08) 43%, transparent 72%); filter: drop-shadow(0 2px 10px rgba(238,244,255,.35)); pointer-events: none; }
+.repo-orb { position: absolute; top: -31px; left: -29px; z-index: 0; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: radial-gradient(circle, rgba(227,235,248,.17) 17%, rgba(205,217,236,.08) 43%, transparent 72%); filter: drop-shadow(0 2px 10px rgba(238,244,255,.35)); opacity: 0; pointer-events: none; transition: opacity .14s ease; }
+.repo-orb.is-visible { opacity: 1; }
 .repo-orb-core { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(250,252,255,.86); border-radius: 50%; background: #020305; box-shadow: 0 0 5px 1px rgba(255,255,255,.75), 0 0 15px 4px rgba(223,232,245,.36); }
 .repo-orb .orb-eyes { gap: 5px; }
 .repo-orb .orb-eye { width: 3px; height: 3px; }
