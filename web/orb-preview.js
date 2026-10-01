@@ -164,9 +164,6 @@ if (canvas && stage && launcher && desk && closeDesk) {
       if (!clonedDesk) return;
       clonedDesk.style.setProperty("visibility", "visible", "important");
       clonedDesk.style.setProperty("opacity", "1", "important");
-      // html2canvas paints the small orbiters as bright discs. Leave them out
-      // of the brief mesh snapshot rather than flashing white during motion.
-      clonedDesk.querySelectorAll(".repo-orb").forEach(orb => { orb.style.display = "none"; });
     },
   });
   const orbPoint = () => {
@@ -315,14 +312,47 @@ if (canvas && stage && launcher && desk && closeDesk) {
 
   function selectProject(projectID) {
     selectedProjectID = projectID;
-    for (const card of repoList.querySelectorAll(".repo-item")) {
-      card.setAttribute("aria-pressed", String(card.dataset.projectId === projectID));
-    }
+    syncSelectedProject();
     updateComposer();
     renderConversation();
   }
 
+  function syncSelectedProject() {
+    for (const entry of repoList.querySelectorAll(".repo-entry")) {
+      const card = entry.querySelector(".repo-item");
+      const selected = card.dataset.projectId === selectedProjectID;
+      card.setAttribute("aria-pressed", String(selected));
+      const existing = entry.querySelector(".repo-orb");
+      if (!selected && existing) {
+        const face = existing.querySelector(".orb-face");
+        window.clearTimeout(blinkTimers.get(face));
+        blinkTimers.delete(face);
+        existing.remove();
+      } else if (selected && !existing) {
+        const orb = document.createElement("span");
+        orb.className = "repo-orb";
+        orb.setAttribute("aria-hidden", "true");
+        const face = document.createElement("span");
+        face.className = "repo-orb-core orb-face";
+        face.dataset.lookRange = "1.5";
+        const eyes = document.createElement("span");
+        eyes.className = "orb-eyes";
+        eyes.append(document.createElement("span"), document.createElement("span"));
+        for (const eye of eyes.children) eye.className = "orb-eye";
+        face.append(eyes);
+        orb.append(face);
+        entry.prepend(orb);
+        scheduleBlink(face);
+        scheduleGaze();
+      }
+    }
+  }
+
   function renderProjects() {
+    for (const face of repoList.querySelectorAll(".repo-orb .orb-face")) {
+      window.clearTimeout(blinkTimers.get(face));
+      blinkTimers.delete(face);
+    }
     repoList.replaceChildren();
     repoCount.textContent = String(projects.length);
     if (!projects.length) {
@@ -332,6 +362,8 @@ if (canvas && stage && launcher && desk && closeDesk) {
       repoList.append(empty);
     }
     for (const project of projects) {
+      const entry = document.createElement("div");
+      entry.className = "repo-entry";
       const card = document.createElement("button");
       card.className = "repo-item";
       card.type = "button";
@@ -349,8 +381,10 @@ if (canvas && stage && launcher && desk && closeDesk) {
       branch.textContent = project.branch || "no branch";
       face.append(name, branch);
       card.append(face);
-      repoList.append(card);
+      entry.append(card);
+      repoList.append(entry);
     }
+    syncSelectedProject();
     updateComposer();
   }
 
@@ -529,7 +563,8 @@ if (canvas && stage && launcher && desk && closeDesk) {
         await animateDesk(true);
         desk.setAttribute("aria-hidden", "false");
         desk.inert = false;
-        closeDesk.focus({ preventScroll: true });
+        if (!repoReload.disabled) await loadProjects();
+        (repoList.querySelector(".repo-item") || desk).focus({ preventScroll: true });
       } else {
         desk.setAttribute("aria-hidden", "true");
         desk.inert = true;
