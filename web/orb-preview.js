@@ -139,6 +139,8 @@ if (canvas && stage && launcher && desk && closeDesk) {
   let previous = 0;
   let elapsed = 0;
   let projects = [];
+  let chatEnabled = false;
+  const pendingApprovals = new Map();
   let selectedProjectID = null;
   const messagesByProject = new Map();
   const activeTurns = new Set();
@@ -227,6 +229,29 @@ if (canvas && stage && launcher && desk && closeDesk) {
       bubble.textContent = message.text || "Working…";
       conversation.append(bubble);
     }
+    for (const approval of pendingApprovals.values()) {
+      if (approval.projectID !== selectedProjectID) continue;
+      const card = document.createElement("section");
+      card.className = "approval-card";
+      card.setAttribute("aria-label", "Codex permission request");
+      const title = document.createElement("strong");
+      title.textContent = "Codex asks for permission";
+      const details = document.createElement("p");
+      const kind = approval.kind.includes("commandExecution") ? "Run a command" : approval.kind.includes("fileChange") ? "Change a file" : "Use extra permissions";
+      details.textContent = [kind, approval.reason, approval.command, approval.target, approval.cwd, approval.permissions ? JSON.stringify(approval.permissions) : ""].filter(Boolean).join("\n");
+      const actions = document.createElement("div");
+      actions.className = "approval-actions";
+      for (const decision of ["decline", "accept"]) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.approvalId = approval.id;
+        button.dataset.decision = decision;
+        button.textContent = decision === "accept" ? (approval.kind.includes("permissions") ? "Allow this turn" : "Allow once") : "Decline";
+        actions.append(button);
+      }
+      card.append(title, details, actions);
+      conversation.append(card);
+    }
     conversation.scrollTop = conversation.scrollHeight;
   }
 
@@ -234,10 +259,10 @@ if (canvas && stage && launcher && desk && closeDesk) {
     const project = projects.find(item => item.id === selectedProjectID);
     const busy = project && activeTurns.has(project.id);
     workspaceRepo.textContent = project ? project.name : "Choose a repository";
-    chatInput.disabled = !project || busy;
-    chatSend.disabled = !project || busy;
-    chatInput.placeholder = project ? (busy ? "Codex is working…" : `Message Codex about ${project.name}…`) : "Choose a repository first";
-    chatStatus.textContent = busy ? "Codex is working in this repository" : project ? `LOCAL · ${project.branch || "NO BRANCH"}` : "";
+    chatInput.disabled = !project || !chatEnabled || busy;
+    chatSend.disabled = !project || !chatEnabled || busy;
+    chatInput.placeholder = !chatEnabled ? "Could not connect to local Bench" : project ? (busy ? "Codex is working…" : `Message Codex about ${project.name}…`) : "Choose a repository first";
+    chatStatus.textContent = !chatEnabled ? "LOCAL BENCH DISCONNECTED" : busy ? "Codex is working in this repository" : project ? `LOCAL · ${project.branch || "NO BRANCH"}` : "";
   }
 
   function selectProject(projectID) {
@@ -302,6 +327,7 @@ if (canvas && stage && launcher && desk && closeDesk) {
       if (!response.ok) throw new Error(`Repository list failed (${response.status})`);
       const payload = await response.json();
       projects = Array.isArray(payload.projects) ? payload.projects : [];
+      chatEnabled = payload.chat_enabled === true;
       if (selectedProjectID && !projects.some(item => item.id === selectedProjectID)) selectedProjectID = null;
       renderProjects();
     } catch {
@@ -359,6 +385,7 @@ if (canvas && stage && launcher && desk && closeDesk) {
           let update;
           try { update = JSON.parse(data); } catch { continue; }
           if (update.type === "delta") answer.text += update.text || "";
+          if (update.type === "approval" && update.approval?.id) pendingApprovals.set(update.approval.id, { ...update.approval, projectID });
           if (update.type === "error") error = update.text || "Codex could not finish this turn.";
           if (update.type === "done") completed = true;
           if (selectedProjectID === projectID) renderConversation();
@@ -368,6 +395,7 @@ if (canvas && stage && launcher && desk && closeDesk) {
     } catch (cause) {
       error = cause instanceof Error ? cause.message : "Chat request failed.";
     } finally {
+      for (const [id, approval] of pendingApprovals) if (approval.projectID === projectID) pendingApprovals.delete(id);
       answer.pending = false;
       if (error) answer.text += `${answer.text ? "\n\n" : ""}${error}`;
       saveMessages(projectID);
@@ -466,6 +494,25 @@ if (canvas && stage && launcher && desk && closeDesk) {
   });
   repoReload.addEventListener("click", loadProjects);
   chatForm.addEventListener("submit", sendMessage);
+  conversation.addEventListener("click", async event => {
+    const button = event.target.closest("button[data-approval-id]");
+    if (!button) return;
+    const id = button.dataset.approvalId;
+    if (!pendingApprovals.has(id)) return;
+    button.disabled = true;
+    try {
+      const response = await fetch(`/api/approvals/${encodeURIComponent(id)}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision: button.dataset.decision }),
+      });
+      if (!response.ok) throw new Error(`Decision failed (${response.status})`);
+      pendingApprovals.delete(id);
+      renderConversation();
+    } catch (error) {
+      button.disabled = false;
+      chatStatus.textContent = error instanceof Error ? error.message : "Could not send decision.";
+    }
+  });
   chatInput.addEventListener("keydown", event => {
     if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); chatForm.requestSubmit(); }
   });

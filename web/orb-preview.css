@@ -202,6 +202,13 @@ button { font: inherit; }
 .chat-message { max-width: 86%; margin: 0 0 16px; padding: 12px 14px; border: 1px solid rgba(231, 237, 246, .09); border-radius: 14px; color: #e9edf5; background: rgba(255,255,255,.035); font-size: 13px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
 .chat-message[data-role="user"] { margin-left: auto; border-color: rgba(231, 237, 246, .18); background: rgba(238,243,252,.09); }
 .chat-message.is-pending { color: rgba(231, 237, 246, .48); }
+.approval-card { max-width: 96%; margin: 0 0 16px; padding: 14px; border: 1px solid rgba(231, 237, 246, .34); border-radius: 12px; background: #1b1d22; color: #eef1f6; font-size: 13px; }
+.approval-card strong { display: block; margin-bottom: 8px; }
+.approval-card p { margin: 0 0 12px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+.approval-actions { display: flex; gap: 8px; }
+.approval-actions button { padding: 7px 11px; border: 1px solid rgba(231, 237, 246, .35); border-radius: 7px; background: #292d34; color: #eef1f6; cursor: pointer; }
+.approval-actions button:hover { background: #383e48; }
+.approval-actions button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .composer { display: flex; align-items: flex-end; gap: 10px; margin: 0 27px; padding: 9px; border: 1px solid rgba(232, 238, 248, .38); border-radius: 13px; background: rgba(3, 4, 7, .55); box-shadow: 0 0 0 1px rgba(255,255,255,.025); }
 .composer:focus-within { border-color: rgba(244, 247, 252, .75); }
 .composer textarea { display: block; flex: 1; min-width: 0; max-height: 108px; padding: 6px 8px; resize: none; border: 0; outline: 0; color: #f2f4fa; background: transparent; font: inherit; font-size: 13px; line-height: 1.5; }

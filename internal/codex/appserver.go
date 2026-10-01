@@ -17,6 +17,19 @@ type Event struct {
 	Type     string `json:"type"`
 	ThreadID string `json:"thread_id,omitempty"`
 	Text     string `json:"text,omitempty"`
+	Approval *ApprovalRequest `json:"approval,omitempty"`
+}
+
+// ApprovalRequest contains the operation the person must review before Codex
+// receives more access than the selected repository sandbox grants.
+type ApprovalRequest struct {
+	ID string `json:"id,omitempty"`
+	Kind string `json:"kind"`
+	Reason string `json:"reason,omitempty"`
+	Command string `json:"command,omitempty"`
+	CWD string `json:"cwd,omitempty"`
+	Target string `json:"target,omitempty"`
+	Permissions json.RawMessage `json:"permissions,omitempty"`
 }
 
 type wireMessage struct {
@@ -38,7 +51,7 @@ func New() *AppServer { return &AppServer{Command: "codex"} }
 
 // RunTurn starts one local app-server connection, creates/resumes the repo's
 // persisted thread, and streams this turn until Codex reports completion.
-func (server *AppServer) RunTurn(ctx context.Context, cwd, threadID, prompt string, emit func(Event)) (string, error) {
+func (server *AppServer) RunTurn(ctx context.Context, cwd, threadID, prompt string, emit func(Event), approve func(context.Context, ApprovalRequest) bool) (string, error) {
 	command := server.Command
 	if command == "" { command = "codex" }
 	status := exec.CommandContext(ctx, command, "login", "status")
@@ -48,7 +61,14 @@ func (server *AppServer) RunTurn(ctx context.Context, cwd, threadID, prompt stri
 		if message == "" { message = "Not logged in" }
 		return "", authFriendly(errors.New(message))
 	}
-	cmd := exec.CommandContext(ctx, command, "app-server", "--listen", "stdio://")
+	cmd := exec.CommandContext(ctx, command, "app-server", "--listen", "stdio://",
+		"-c", `windows.sandbox="elevated"`,
+		"-c", "features.apps=false",
+		"-c", "features.plugins=false",
+		"-c", "web_search=\"disabled\"",
+		"-c", "mcp_servers={}",
+		"-c", `default_permissions="bench_repo"`,
+		"-c", `permissions.bench_repo={extends=":workspace",filesystem={":root"="deny",":minimal"="read",":tmpdir"="deny",":slash_tmp"="deny",":workspace_roots"={"."="write"}},network={enabled=false}}`)
 	stdin, err := cmd.StdinPipe()
 	if err != nil { return "", fmt.Errorf("start Codex app server: %w", err) }
 	stdout, err := cmd.StdoutPipe()
@@ -88,8 +108,8 @@ func (server *AppServer) RunTurn(ctx context.Context, cwd, threadID, prompt stri
 			case <-ctx.Done(): return wireMessage{}, ctx.Err()
 			case err := <-readErr: return wireMessage{}, fmt.Errorf("Codex app server stopped: %w", err)
 			case message := <-messages:
-				if message.Method != "" && len(message.ID) != 0 { if err := respondToServerRequest(stdin, message); err != nil { return wireMessage{}, err }; continue }
-				if len(message.ID) == 0 { if err := respondToServerRequest(stdin, message); err != nil { return wireMessage{}, err }; continue }
+				if message.Method != "" && len(message.ID) != 0 { if err := respondToServerRequest(ctx, stdin, message, approve); err != nil { return wireMessage{}, err }; continue }
+				if len(message.ID) == 0 { continue }
 				var responseID int64
 				_ = json.Unmarshal(message.ID, &responseID)
 				if responseID != id { continue }
@@ -99,14 +119,15 @@ func (server *AppServer) RunTurn(ctx context.Context, cwd, threadID, prompt stri
 		}
 	}
 
-	if _, err := request("initialize", map[string]any{"clientInfo": map[string]string{"name": "bench", "title": "Bench", "version": "0.2.0"}}); err != nil { return "", authFriendly(err) }
+	if _, err := request("initialize", map[string]any{"clientInfo": map[string]string{"name": "bench", "title": "Bench", "version": "0.2.0"}, "capabilities": map[string]bool{"experimentalApi": true}}); err != nil { return "", authFriendly(err) }
 	if err := write("initialized", 0, map[string]any{}); err != nil { return "", err }
 
-	threadParams := map[string]any{"cwd": cwd, "sandbox": "workspace-write", "approvalPolicy": "never", "approvalsReviewer": "user"}
+	threadParams := map[string]any{
+		"cwd": cwd, "permissions": "bench_repo", "approvalPolicy": "on-request",
+		"developerInstructions": "You are working inside Bench on the selected repository. Keep code changes focused on this repository, follow the user's requests, and run relevant checks. Ask for approval before accessing files or services outside the repository sandbox. Use the local Git identity; never invent or change the author identity. Commit or push only when the user requests it.",
+	}
 	method := "thread/start"
-	if threadID == "" {
-		threadParams["developerInstructions"] = "You are working inside Bench on the selected repository. Treat the current working directory as the complete scope for code changes. The user wants to discuss and edit this repository through the Bench chat. Be direct and honest, make requested code changes in the workspace, and run relevant checks. Follow the user's instructions about committing or pushing changes; never change or invent the author identity."
-	} else {
+	if threadID != "" {
 		method = "thread/resume"
 		threadParams["threadId"] = threadID
 	}
@@ -121,8 +142,8 @@ func (server *AppServer) RunTurn(ctx context.Context, cwd, threadID, prompt stri
 		"threadId": threadID,
 		"cwd": cwd,
 		"input": []map[string]string{{"type": "text", "text": prompt}},
-		"sandboxPolicy": map[string]any{"type": "workspaceWrite", "writableRoots": []string{cwd}, "networkAccess": true},
-		"approvalPolicy": "never",
+		"permissions": "bench_repo",
+		"approvalPolicy": "on-request",
 	})
 	if err != nil { return threadID, authFriendly(err) }
 	for {
@@ -130,7 +151,7 @@ func (server *AppServer) RunTurn(ctx context.Context, cwd, threadID, prompt stri
 		case <-ctx.Done(): return threadID, ctx.Err()
 		case err := <-readErr: return threadID, fmt.Errorf("Codex app server stopped: %w", err)
 		case message := <-messages:
-			if len(message.ID) != 0 { if err := respondToServerRequest(stdin, message); err != nil { return threadID, err }; continue }
+			if len(message.ID) != 0 { if err := respondToServerRequest(ctx, stdin, message, approve); err != nil { return threadID, err }; continue }
 			switch message.Method {
 			case "item/agentMessage/delta":
 				var params struct { ThreadID string `json:"threadId"`; Delta string `json:"delta"` }
@@ -148,20 +169,53 @@ func (server *AppServer) RunTurn(ctx context.Context, cwd, threadID, prompt stri
 	}
 }
 
-func respondToServerRequest(stdin io.Writer, message wireMessage) error {
+func respondToServerRequest(ctx context.Context, stdin io.Writer, message wireMessage, approve func(context.Context, ApprovalRequest) bool) error {
 	if len(message.ID) == 0 { return nil }
-	// Sandbox-write and no-approval turns should not request escalation. Refuse
-	// any unexpected server request instead of granting it implicitly.
-	response := map[string]any{"id": json.RawMessage(message.ID), "error": map[string]any{"code": -32000, "message": "Bench does not grant permission escalations."}}
+	result := any(nil)
+	switch message.Method {
+	case "item/commandExecution/requestApproval", "item/fileChange/requestApproval":
+		request := approvalRequest(message)
+		decision := "decline"
+		if approve != nil && (request.Command != "" || request.Target != "") && approve(ctx, request) { decision = "accept" }
+		result = map[string]any{"decision": decision}
+	case "item/permissions/requestApproval":
+		request := approvalRequest(message)
+		if approve != nil && approve(ctx, request) && len(request.Permissions) > 0 {
+			result = map[string]any{"permissions": request.Permissions, "scope": "turn"}
+		} else { result = map[string]any{"permissions": map[string]any{}} }
+	case "mcpServer/elicitation/request":
+		result = map[string]any{"action": "decline", "content": nil}
+	}
+	response := map[string]any{"id": json.RawMessage(message.ID)}
+	if result != nil { response["result"] = result } else { response["error"] = map[string]any{"code": -32000, "message": "Unsupported request from Codex App Server."} }
 	data, err := json.Marshal(response)
 	if err != nil { return err }
 	_, err = fmt.Fprintln(stdin, string(data))
 	return err
 }
 
+func approvalRequest(message wireMessage) ApprovalRequest {
+	var params struct {
+		Reason string `json:"reason"`
+		Command string `json:"command"`
+		CWD string `json:"cwd"`
+		GrantRoot string `json:"grantRoot"`
+		Permissions json.RawMessage `json:"permissions"`
+		NetworkApprovalContext struct { Host string `json:"host"`; Protocol string `json:"protocol"` } `json:"networkApprovalContext"`
+	}
+	_ = json.Unmarshal(message.Params, &params)
+	request := ApprovalRequest{Kind: message.Method, Reason: params.Reason, Command: params.Command, CWD: params.CWD, Permissions: params.Permissions}
+	if params.GrantRoot != "" { request.Target = params.GrantRoot }
+	if params.NetworkApprovalContext.Host != "" { request.Target = params.NetworkApprovalContext.Protocol + "://" + params.NetworkApprovalContext.Host }
+	return request
+}
+
 func authFriendly(err error) error {
 	if err == nil { return nil }
 	message := strings.ToLower(err.Error())
+	if strings.Contains(message, "windows sandbox wrapper") || strings.Contains(message, "split filesystem read restrictions") {
+		return errors.New("Bench needs the elevated Codex Windows sandbox before repository chat can run safely. Set up Agent sandbox in Codex, then retry. Bench will not fall back to broad file access.")
+	}
 	if strings.Contains(message, "not logged in") || strings.Contains(message, "unauthorized") || strings.Contains(message, "authentication") {
 		return errors.New("Codex isn’t logged in on this machine. Run `codex login`, then try the chat again.")
 	}

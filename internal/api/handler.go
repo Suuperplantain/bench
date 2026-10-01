@@ -2,10 +2,12 @@ package api
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net"
 	"net/http"
 	"net/url"
@@ -39,25 +41,24 @@ type Handler struct {
 	codex   *codex.AppServer
 	chatLocksMu sync.Mutex
 	chatLocks map[string]*sync.Mutex
+	approvalsMu sync.Mutex
+	approvals map[string]chan bool
 }
 
 func NewHandler(scanner ProjectScanner, projectStore ProjectStore) http.Handler {
-	handler := &Handler{scanner: scanner, store: projectStore, codex: codex.New(), chatLocks: make(map[string]*sync.Mutex)}
+	handler := &Handler{scanner: scanner, store: projectStore, codex: codex.New(), chatLocks: make(map[string]*sync.Mutex), approvals: make(map[string]chan bool)}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/health", handler.health)
 	mux.HandleFunc("GET /api/projects", handler.projects)
 	mux.HandleFunc("POST /api/projects", handler.addProject)
 	mux.HandleFunc("PUT /api/projects/{id}/note", handler.saveNote)
 	mux.HandleFunc("POST /api/projects/{id}/chat", handler.chat)
+	mux.HandleFunc("POST /api/approvals/{id}", handler.decideApproval)
 	mux.Handle("/", staticFiles())
 	return securityHeaders(mux)
 }
 
 func (handler *Handler) chat(w http.ResponseWriter, r *http.Request) {
-	if !sameOrigin(r) {
-		writeError(w, http.StatusForbidden, "chat requests must come from the Bench page")
-		return
-	}
 	projectID := strings.TrimSpace(r.PathValue("id"))
 	if projectID == "" { writeError(w, http.StatusBadRequest, "project ID is required"); return }
 	r.Body = http.MaxBytesReader(w, r.Body, 16*1024)
@@ -84,7 +85,7 @@ func (handler *Handler) chat(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
 	if !ok { writeError(w, http.StatusInternalServerError, "streaming is not available"); return }
 	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-cache, no-transform")
+	w.Header().Set("Cache-Control", "no-store, no-transform")
 	w.Header().Set("Connection", "keep-alive")
 	w.WriteHeader(http.StatusOK)
 	flusher.Flush()
@@ -94,8 +95,45 @@ func (handler *Handler) chat(w http.ResponseWriter, r *http.Request) {
 		if marshalErr == nil { _, _ = fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event.Type, data); flusher.Flush() }
 	}
 	prompt := "This chat is attached to the repository '" + project.Name + "'. Keep your answers and any code changes focused on this repository.\n\n" + payload.Message
-	_, err = handler.codex.RunTurn(r.Context(), project.Path, threadID, prompt, emit)
+	_, err = handler.codex.RunTurn(r.Context(), project.Path, threadID, prompt, emit, func(ctx context.Context, request codex.ApprovalRequest) bool {
+		var token [24]byte
+		if _, err := rand.Read(token[:]); err != nil { return false }
+		request.ID = fmt.Sprintf("%x", token)
+		decision := make(chan bool, 1)
+		handler.approvalsMu.Lock()
+		handler.approvals[request.ID] = decision
+		handler.approvalsMu.Unlock()
+		defer func() { handler.approvalsMu.Lock(); delete(handler.approvals, request.ID); handler.approvalsMu.Unlock() }()
+		emit(codex.Event{Type: "approval", Approval: &request})
+		select {
+		case accepted := <-decision: return accepted
+		case <-ctx.Done(): return false
+		case <-time.After(5 * time.Minute): return false
+		}
+	})
 	if err != nil { emit(codex.Event{Type: "error", Text: err.Error()}) }
+}
+
+func (handler *Handler) decideApproval(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1024)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	var payload struct { Decision string `json:"decision"` }
+	if err := decoder.Decode(&payload); err != nil { writeError(w, http.StatusBadRequest, "expected an approval decision"); return }
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) { writeError(w, http.StatusBadRequest, "expected one JSON object"); return }
+	if payload.Decision != "accept" && payload.Decision != "decline" { writeError(w, http.StatusBadRequest, "decision must be accept or decline"); return }
+	handler.approvalsMu.Lock()
+	decision := handler.approvals[r.PathValue("id")]
+	if decision == nil { handler.approvalsMu.Unlock(); writeError(w, http.StatusNotFound, "approval request is no longer active"); return }
+	select {
+	case decision <- payload.Decision == "accept":
+		delete(handler.approvals, r.PathValue("id"))
+		handler.approvalsMu.Unlock()
+		writeJSON(w, http.StatusOK, map[string]string{"status": "recorded"})
+	default:
+		handler.approvalsMu.Unlock()
+		writeError(w, http.StatusConflict, "approval already answered")
+	}
 }
 
 func (handler *Handler) chatLock(projectID string) *sync.Mutex {
@@ -105,15 +143,17 @@ func (handler *Handler) chatLock(projectID string) *sync.Mutex {
 	return handler.chatLocks[projectID]
 }
 
-func sameOrigin(r *http.Request) bool {
+func trustedRequest(r *http.Request) bool {
+	// Reject DNS rebinding: a browser must address Bench by an actual loopback
+	// name or address, not an attacker-controlled hostname resolving to it.
+	requestHost := r.Host
+	if host, _, err := net.SplitHostPort(r.Host); err == nil { requestHost = host }
+	if !loopbackHost(requestHost) { return false }
+	if site := r.Header.Get("Sec-Fetch-Site"); site != "" && site != "same-origin" && site != "none" { return false }
 	origin := r.Header.Get("Origin")
 	if origin == "" { return true }
 	parsed, err := url.Parse(origin)
-	if err != nil || parsed.Host == "" { return false }
-	if strings.EqualFold(parsed.Host, r.Host) { return true }
-	requestHost, _, splitErr := net.SplitHostPort(r.Host)
-	if splitErr != nil { requestHost = strings.Trim(r.Host, "[]") }
-	return loopbackHost(parsed.Hostname()) && loopbackHost(requestHost)
+	return err == nil && parsed.Scheme == "http" && parsed.User == nil && parsed.Path == "" && parsed.RawQuery == "" && parsed.Fragment == "" && strings.EqualFold(parsed.Host, r.Host)
 }
 
 func loopbackHost(host string) bool {
@@ -132,6 +172,14 @@ func staticFiles() http.Handler {
 			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
+		// Serve only the current UI. A private file accidentally copied into the
+		// web directory must never become an HTTP endpoint or directory listing.
+		switch r.URL.Path {
+		case "/", "/index.html", "/orb-preview.css", "/orb-preview.js":
+		default:
+			http.NotFound(w, r)
+			return
+		}
 		if _, err := os.Stat("web/index.html"); err != nil {
 			http.NotFound(w, r)
 			return
@@ -143,7 +191,22 @@ func staticFiles() http.Handler {
 func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.Header().Set("Cross-Origin-Resource-Policy", "same-origin")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
 		w.Header().Set("Cache-Control", "no-store")
+		if !trustedRequest(r) {
+			writeError(w, http.StatusForbidden, "Bench is only available from its own loopback page")
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/api/") && r.Method != http.MethodGet && r.Method != http.MethodHead {
+			mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+			if err != nil || mediaType != "application/json" {
+				writeError(w, http.StatusUnsupportedMediaType, "API changes require application/json")
+				return
+			}
+		}
 		next.ServeHTTP(w, r)
 	})
 }
@@ -158,15 +221,23 @@ func (handler *Handler) projects(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "project metadata could not be read")
 		return
 	}
+	type projectSummary struct {
+		ID string `json:"id"`
+		Name string `json:"name"`
+		Branch string `json:"branch"`
+		CommitCount int `json:"commit_count"`
+	}
+	summaries := make([]projectSummary, 0, len(projects))
 	for i := range projects {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-		output, countErr := exec.CommandContext(ctx, "git", "-c", "safe.directory="+projects[i].Path, "-C", projects[i].Path, "rev-list", "--count", "HEAD").Output()
+		output, countErr := exec.CommandContext(ctx, "git", "-c", "core.fsmonitor=false", "-C", projects[i].Path, "rev-list", "--count", "HEAD").Output()
 		cancel()
 		if countErr == nil {
 			projects[i].CommitCount, _ = strconv.Atoi(strings.TrimSpace(string(output)))
 		}
+		summaries = append(summaries, projectSummary{ID: projects[i].ID, Name: projects[i].Name, Branch: projects[i].Branch, CommitCount: projects[i].CommitCount})
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"projects": projects})
+	writeJSON(w, http.StatusOK, map[string]any{"projects": summaries, "chat_enabled": true})
 }
 
 func (handler *Handler) addProject(w http.ResponseWriter, r *http.Request) {

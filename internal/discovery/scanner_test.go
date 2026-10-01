@@ -42,3 +42,16 @@ func TestScanRejectsInvalidRoot(t *testing.T) {
 		t.Fatal("Scan() error = nil, want an error for a missing root")
 	}
 }
+
+func TestInspectPathRejectsLinkOutsideRoot(t *testing.T) {
+	parent := t.TempDir()
+	root := filepath.Join(parent, "allowed")
+	private := filepath.Join(parent, "private")
+	if err := os.MkdirAll(root, 0o755); err != nil { t.Fatal(err) }
+	if err := os.MkdirAll(private, 0o755); err != nil { t.Fatal(err) }
+	link := filepath.Join(root, "linked-private-folder")
+	if err := os.Symlink(private, link); err != nil { t.Skipf("directory symlinks unavailable: %v", err) }
+	if _, err := New([]string{root}).InspectPath(context.Background(), link); err == nil {
+		t.Fatal("InspectPath accepted a directory link outside the configured root")
+	}
+}

@@ -92,6 +92,11 @@ func (scanner *Scanner) InspectPath(ctx context.Context, candidate string) (Proj
 	if err != nil || !info.IsDir() {
 		return Project{}, fmt.Errorf("project path must be an existing directory")
 	}
+	// Lexical containment is insufficient here: a symlink or Windows junction
+	// inside a configured root could point at private directories outside it.
+	absPath, err = filepath.EvalSymlinks(absPath)
+	if err != nil { return Project{}, fmt.Errorf("resolve project directory: %w", err) }
+	absPath = filepath.Clean(absPath)
 
 	allowed := false
 	for _, root := range scanner.roots {
@@ -99,7 +104,8 @@ func (scanner *Scanner) InspectPath(ctx context.Context, candidate string) (Proj
 		if err != nil {
 			continue
 		}
-		if isWithinRoot(filepath.Clean(absoluteRoot), absPath) {
+		resolvedRoot, err := filepath.EvalSymlinks(absoluteRoot)
+		if err == nil && isWithinRoot(filepath.Clean(resolvedRoot), absPath) {
 			allowed = true
 			break
 		}
@@ -126,7 +132,9 @@ func (scanner *Scanner) InspectPath(ctx context.Context, candidate string) (Proj
 	insideAllowedRoot := false
 	for _, root := range scanner.roots {
 		absoluteRoot, err := filepath.Abs(root)
-		if err == nil && isWithinRoot(filepath.Clean(absoluteRoot), repositoryRoot) {
+		if err != nil { continue }
+		resolvedRoot, err := filepath.EvalSymlinks(absoluteRoot)
+		if err == nil && isWithinRoot(filepath.Clean(resolvedRoot), repositoryRoot) {
 			insideAllowedRoot = true
 			break
 		}
@@ -184,7 +192,7 @@ func inspectRepository(parent context.Context, repositoryPath string) (Project, 
 func gitOutput(parent context.Context, repositoryPath string, args ...string) string {
 	ctx, cancel := context.WithTimeout(parent, 2*time.Second)
 	defer cancel()
-	commandArgs := append([]string{"-C", repositoryPath}, args...)
+	commandArgs := append([]string{"-c", "core.fsmonitor=false", "-C", repositoryPath}, args...)
 	output, err := exec.CommandContext(ctx, "git", commandArgs...).Output()
 	if err != nil {
 		return ""

@@ -4,3 +4,10 @@
 /bench.db-wal
 /coverage.out
 /coverage.html
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite3
+*.pem
+*.key
