@@ -4,26 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#08090c" />
-    <title>Bench — Orb Study</title>
-    <link rel="stylesheet" href="/orb-preview.css?v=orb-nod-1" />
-    <script src="/orb-preview.js?v=orb-nod-1" defer></script>
+    <title>Bench</title>
+    <link rel="stylesheet" href="/orb-preview.css?v=repo-stack-1" />
+    <script src="/vendor/html2canvas.min.js" defer></script>
+    <script src="/orb-preview.js?v=repo-stack-1" type="module"></script>
   </head>
   <body>
-    <main class="stage" aria-label="Orb preview">
+    <main class="stage" aria-label="Bench">
       <div class="ambient" aria-hidden="true"></div>
-      <section class="side-desk" id="side-desk" role="dialog" aria-label="Bench app" aria-modal="false" aria-hidden="true" inert>
+      <section class="side-desk" id="side-desk" role="dialog" aria-label="Repositories" aria-modal="false" aria-hidden="true" inert>
         <div class="desk-interior">
           <div class="desk-topline">
-            <span class="desk-brand"><span class="desk-mark" aria-hidden="true"></span>BENCH</span>
+            <span class="desk-brand">BENCH <span class="desk-count" id="repo-count"></span></span>
             <button class="desk-close" id="desk-close" type="button" aria-label="Minimise Bench">&minus;</button>
           </div>
           <div class="desk-body">
             <aside class="repo-rail" aria-label="Repositories">
-              <div class="rail-heading"><span>REPOSITORIES</span><span id="repo-count"></span></div>
               <div class="repo-list" id="repo-list" aria-live="polite"><p class="repo-message">Loading repositories…</p></div>
               <button class="repo-reload" id="repo-reload" type="button">Refresh list</button>
             </aside>
-            <section class="workspace" aria-label="Repository conversation">
+            <section class="workspace" aria-label="Repository conversation" hidden>
               <header class="workspace-header">
                 <span class="workspace-label">CONVERSATION</span>
                 <strong class="workspace-repo" id="workspace-repo">Choose a repository</strong>
@@ -44,10 +44,12 @@
       <button class="orb-launcher" id="orb-launcher" type="button" aria-label="Open Bench" aria-expanded="false" aria-controls="side-desk">
         <span class="orb-aura" aria-hidden="true"></span>
         <canvas class="corona" id="corona" aria-hidden="true"></canvas>
-        <span class="orb-core orb-face" data-look-range="6" aria-hidden="true">
+        <span class="void-motion" aria-hidden="true"></span>
+        <span class="orb-core orb-face" data-look-range="2.5" aria-hidden="true">
           <span class="orb-eyes"><span class="orb-eye"></span><span class="orb-eye"></span></span>
         </span>
         <span class="orb-focus" aria-hidden="true"></span>
+        <span class="void-caption" aria-hidden="true">VOID</span>
       </button>
       <p class="stage-hint" id="stage-hint">CLICK THE ORB</p>
     </main>

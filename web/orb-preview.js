@@ -1,3 +1,5 @@
+import { createGenie } from "./vendor/genie-web/index.js";
+
 const canvas = document.querySelector("#corona");
 const stage = document.querySelector(".stage");
 const launcher = document.querySelector("#orb-launcher");
@@ -147,6 +149,52 @@ if (canvas && stage && launcher && desk && closeDesk) {
   const blinkTimers = new Map();
   let pointer = null;
   let gazeFrame = 0;
+  let orbPointerInside = false;
+  let transitioning = false;
+  let genie = null;
+  // The panel begins hidden. Capture its visible clone so the mesh carries
+  // the actual UI instead of a dark rectangle during the transition.
+  const captureDesk = element => window.html2canvas(element, {
+    backgroundColor: null,
+    logging: false,
+    useCORS: false,
+    scale: 1,
+    onclone: clonedDocument => {
+      const clonedDesk = clonedDocument.getElementById("side-desk");
+      if (!clonedDesk) return;
+      clonedDesk.style.setProperty("visibility", "visible", "important");
+      clonedDesk.style.setProperty("opacity", "1", "important");
+      // html2canvas paints the small orbiters as bright discs. Leave them out
+      // of the brief mesh snapshot rather than flashing white during motion.
+      clonedDesk.querySelectorAll(".repo-orb").forEach(orb => { orb.style.display = "none"; });
+    },
+  });
+  const orbPoint = () => {
+    const core = launcher.querySelector(".orb-core").getBoundingClientRect();
+    return { left: core.left + core.width / 2, top: core.top + core.height / 2, width: 0, height: 0 };
+  };
+  try {
+    if (!window.html2canvas) throw new Error("panel snapshot library unavailable");
+    genie = createGenie({
+      target: desk,
+      origin: orbPoint(),
+      open: false,
+      direction: "bottom",
+      duration: 440,
+      slideEnd: .96,
+      translateStart: .25,
+      curve: "inOut",
+      easing: "linear",
+      fadeStart: .96,
+      columns: 20,
+      rows: 48,
+      zIndex: 5,
+      snapshot: "fresh",
+      capture: captureDesk,
+    });
+  } catch (error) {
+    console.warn("Genie mesh unavailable; using a simple window transition.", error);
+  }
 
   function updateGaze() {
     gazeFrame = 0;
@@ -261,8 +309,8 @@ if (canvas && stage && launcher && desk && closeDesk) {
     workspaceRepo.textContent = project ? project.name : "Choose a repository";
     chatInput.disabled = !project || !chatEnabled || busy;
     chatSend.disabled = !project || !chatEnabled || busy;
-    chatInput.placeholder = !chatEnabled ? "Could not connect to local Bench" : project ? (busy ? "Codex is working…" : `Message Codex about ${project.name}…`) : "Choose a repository first";
-    chatStatus.textContent = !chatEnabled ? "LOCAL BENCH DISCONNECTED" : busy ? "Codex is working in this repository" : project ? `LOCAL · ${project.branch || "NO BRANCH"}` : "";
+    chatInput.placeholder = !chatEnabled ? "Codex chat is unavailable" : project ? (busy ? "Codex is working…" : `Message Codex about ${project.name}…`) : "Choose a repository first";
+    chatStatus.textContent = !chatEnabled ? "CODEX CHAT UNAVAILABLE" : busy ? "Codex is working in this repository" : project ? `LOCAL · ${project.branch || "NO BRANCH"}` : "";
   }
 
   function selectProject(projectID) {
@@ -272,14 +320,9 @@ if (canvas && stage && launcher && desk && closeDesk) {
     }
     updateComposer();
     renderConversation();
-    if (!chatInput.disabled) chatInput.focus({ preventScroll: true });
   }
 
   function renderProjects() {
-    for (const face of repoList.querySelectorAll(".orb-face")) {
-      window.clearTimeout(blinkTimers.get(face));
-      blinkTimers.delete(face);
-    }
     repoList.replaceChildren();
     repoCount.textContent = String(projects.length);
     if (!projects.length) {
@@ -293,16 +336,9 @@ if (canvas && stage && launcher && desk && closeDesk) {
       card.className = "repo-item";
       card.type = "button";
       card.dataset.projectId = project.id;
+      card.title = `${project.name} · ${project.branch || "no branch"}`;
+      card.setAttribute("aria-label", card.title);
       card.setAttribute("aria-pressed", String(project.id === selectedProjectID));
-      const orb = document.createElement("span");
-      orb.className = "repo-orb orb-face";
-      orb.dataset.lookRange = "2.5";
-      orb.setAttribute("aria-hidden", "true");
-      const eyes = document.createElement("span");
-      eyes.className = "orb-eyes";
-      eyes.append(Object.assign(document.createElement("span"), { className: "orb-eye" }),
-        Object.assign(document.createElement("span"), { className: "orb-eye" }));
-      orb.append(eyes);
       const face = document.createElement("span");
       face.className = "repo-card-face";
       const name = document.createElement("span");
@@ -312,11 +348,9 @@ if (canvas && stage && launcher && desk && closeDesk) {
       branch.className = "repo-branch";
       branch.textContent = project.branch || "no branch";
       face.append(name, branch);
-      card.append(orb, face);
+      card.append(face);
       repoList.append(card);
-      scheduleBlink(orb);
     }
-    updateGaze();
     updateComposer();
   }
 
@@ -445,27 +479,73 @@ if (canvas && stage && launcher && desk && closeDesk) {
     previous = 0;
   }
 
-  function setOpen(open) {
-    if (open) launcher.classList.remove("is-nodding");
-    launcher.setAttribute("aria-expanded", String(open));
-    launcher.setAttribute("aria-label", open ? "Bench is open" : "Open Bench");
-    launcher.setAttribute("aria-hidden", String(open));
-    launcher.tabIndex = open ? -1 : 0;
-    stage.classList.toggle("is-open", open);
-    desk.setAttribute("aria-hidden", String(!open));
-    desk.inert = !open;
-    if (open) closeDesk.focus({ preventScroll: true });
-    else launcher.focus({ preventScroll: true });
+  function pointerIsOnOrb(point) {
+    if (!point) return false;
+    const rect = launcher.getBoundingClientRect();
+    const radius = rect.width * .42;
+    return Math.hypot(point.x - (rect.left + rect.width / 2), point.y - (rect.top + rect.height / 2)) <= radius;
   }
 
-  launcher.addEventListener("click", () => setOpen(true));
-  launcher.addEventListener("pointerenter", event => {
-    if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
-    if (reduceMotion.matches || stage.classList.contains("is-open") || launcher.classList.contains("is-nodding")) return;
-    launcher.classList.add("is-nodding");
-  });
-  launcher.querySelector(".orb-core").addEventListener("animationend", event => {
-    if (event.animationName === "orb-double-nod") launcher.classList.remove("is-nodding");
+  // The vendored mesh deforms a snapshot of the whole panel toward the orb.
+  // A plain scale is only used if WebGL is unavailable.
+  async function animateDesk(open) {
+    if (genie) {
+      try {
+        // A zero-sized origin makes the bottom edge converge to one point.
+        // Recalculate it on every turn so resize and display scaling stay aligned.
+        genie.set({ origin: orbPoint(), duration: open ? 380 : 360 });
+        return await (open ? genie.show() : genie.hide());
+      } catch (error) {
+        console.warn("Genie capture failed; using a simple window transition.", error);
+        genie.destroy();
+        genie = null;
+      }
+    }
+    if (reduceMotion.matches || !desk.animate) return;
+    const panel = desk.getBoundingClientRect();
+    const point = orbPoint();
+    const x = point.left - (panel.left + panel.width / 2);
+    const y = point.top - (panel.top + panel.height / 2);
+    const small = `translate(${x}px, ${y}px) scale(.001)`;
+    const motion = desk.animate(open
+      ? [{ transform: small, opacity: 0 }, { transform: "none", opacity: 1 }]
+      : [{ transform: "none", opacity: 1 }, { transform: small, opacity: 0 }],
+    { duration: 300, easing: "cubic-bezier(.2,.75,.2,1)", fill: "both" });
+    try { await motion.finished; } finally { motion.cancel(); }
+  }
+
+  async function setOpen(open) {
+    if (transitioning) return;
+    transitioning = true;
+    if (open) launcher.classList.remove("is-nodding");
+    launcher.setAttribute("aria-expanded", String(open));
+    launcher.setAttribute("aria-label", open ? "Minimise Bench" : "Open Bench");
+    try {
+      if (open) {
+        stage.classList.add("is-merging");
+        if (!reduceMotion.matches) await new Promise(resolve => window.setTimeout(resolve, 60));
+        stage.classList.remove("is-merging");
+        stage.classList.add("is-open");
+        await animateDesk(true);
+        desk.setAttribute("aria-hidden", "false");
+        desk.inert = false;
+        closeDesk.focus({ preventScroll: true });
+      } else {
+        desk.setAttribute("aria-hidden", "true");
+        desk.inert = true;
+        launcher.focus({ preventScroll: true });
+        await animateDesk(false);
+        stage.classList.remove("is-open", "is-merging");
+        orbPointerInside = pointerIsOnOrb(pointer);
+      }
+    } finally {
+      transitioning = false;
+    }
+  }
+
+  launcher.addEventListener("click", () => setOpen(launcher.getAttribute("aria-expanded") !== "true"));
+  launcher.querySelector(".orb-eyes").addEventListener("animationend", event => {
+    if (event.animationName === "orb-eye-double-nod") launcher.classList.remove("is-nodding");
   });
   closeDesk.addEventListener("click", () => setOpen(false));
 
@@ -475,9 +555,16 @@ if (canvas && stage && launcher && desk && closeDesk) {
   document.addEventListener("pointermove", event => {
     if (reduceMotion.matches) return;
     pointer = { x: event.clientX, y: event.clientY };
+    if (event.pointerType === "mouse" || event.pointerType === "pen") {
+      const inside = pointerIsOnOrb(pointer);
+      if (inside && !orbPointerInside && !stage.classList.contains("is-open")) {
+        launcher.classList.add("is-nodding");
+      }
+      orbPointerInside = inside;
+    }
     scheduleGaze();
   }, { passive: true });
-  document.addEventListener("pointerleave", () => { pointer = null; scheduleGaze(); });
+  document.addEventListener("pointerleave", () => { pointer = null; orbPointerInside = false; scheduleGaze(); });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) pause(); else run();
     refreshBlinking();

@@ -175,7 +175,7 @@ func staticFiles() http.Handler {
 		// Serve only the current UI. A private file accidentally copied into the
 		// web directory must never become an HTTP endpoint or directory listing.
 		switch r.URL.Path {
-		case "/", "/index.html", "/orb-preview.css", "/orb-preview.js":
+		case "/", "/index.html", "/orb-preview.css", "/orb-preview.js", "/assets/void-active.gif", "/vendor/genie-web/index.js", "/vendor/genie-web/chunk-5FUC6FK5.js", "/vendor/html2canvas.min.js":
 		default:
 			http.NotFound(w, r)
 			return
